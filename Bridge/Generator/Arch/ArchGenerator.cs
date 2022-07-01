@@ -2,15 +2,15 @@
 
 internal abstract class ArchGenerator
 {
-    public abstract IEnumerable<byte> Compile(IEnumerable<Instruction> instructions);
+    public abstract void Compile(Stream stream, IEnumerable<Instruction> instructions);
 
-    public abstract IEnumerable<byte> CompilePush(Instruction inst);
+    public abstract void CompilePush(Stream stream, Instruction inst);
     
-    public abstract IEnumerable<byte> CompilePop(Instruction inst);
+    public abstract void CompilePop(Stream stream, Instruction inst);
     
-    public abstract IEnumerable<byte> CompileCall(Instruction inst);
+    public abstract void CompileCall(Stream stream, Instruction inst);
 
-    private protected Func<Instruction, IEnumerable<byte>> GetHandler(Type type)
+    private protected Action<Stream, Instruction> GetHandler(Type type)
     {
         if (type == typeof(Push))
             return CompilePush;

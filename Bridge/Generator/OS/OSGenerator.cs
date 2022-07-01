@@ -2,5 +2,5 @@
 
 internal abstract class OSGenerator
 {
-    public abstract IEnumerable<byte> Compile(IEnumerable<Data> data, IEnumerable<Import> imports, IEnumerable<Instruction> instructions);
+    public abstract void Compile(Stream stream, IEnumerable<Data> data, IEnumerable<Import> imports, IEnumerable<Instruction> instructions);
 }

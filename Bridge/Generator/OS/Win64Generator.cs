@@ -2,27 +2,22 @@
 
 internal class Win64Generator : OSGenerator
 {
-    public override IEnumerable<byte> Compile(IEnumerable<Data> data, IEnumerable<Import> imports, IEnumerable<Instruction> instructions)
+    public override void Compile(Stream stream, IEnumerable<Data> data, IEnumerable<Import> imports, IEnumerable<Instruction> instructions)
     {
-        List<byte> bytes = new List<byte>();
+        CompileHeader(stream, data, imports, instructions);
 
-        bytes.AddRange(CompileHeader(data, imports, instructions));
+        CompileInstructions(stream, instructions);
 
-        bytes.AddRange(CompileInstructions(instructions));
+        CompileImports(stream, imports);
 
-        bytes.AddRange(CompileImports(imports));
-
-        bytes.AddRange(CompileData(data));
-
-        return bytes;
+        CompileData(stream, data);
     }
 
-    private IEnumerable<byte> CompileHeader(IEnumerable<Data> data, IEnumerable<Import> imports, IEnumerable<Instruction> instructions)
+    private void CompileHeader(Stream stream, IEnumerable<Data> data, IEnumerable<Import> imports, IEnumerable<Instruction> instructions)
     {
-        return null;
     }
 
-    private IEnumerable<byte> CompileInstructions(IEnumerable<Instruction> instructions)
+    private void CompileInstructions(Stream stream, IEnumerable<Instruction> instructions)
     {
         ArchGenerator generator = Config.Arch switch
         {
@@ -30,21 +25,19 @@ internal class Win64Generator : OSGenerator
             _ => throw new Exception("Unsupported architecture")
         };
 
-        return generator.Compile(instructions);
+        generator.Compile(stream, instructions);
+        stream.Pad(512);
     }
     
-    private IEnumerable<byte> CompileImports(IEnumerable<Import> imports)
+    private void CompileImports(Stream stream, IEnumerable<Import> imports)
     {
-        return null;
     }
 
-    private IEnumerable<byte> CompileData(IEnumerable<Data> data)
+    private void CompileData(Stream stream, IEnumerable<Data> data)
     {
-        List<byte> bytes = new List<byte>();
-
         for (int i = 0; i < data.Count(); i++)
-            bytes.Add(data.ElementAt(i).Value);
-
-        return bytes;
+            stream.Write(data.ElementAt(i).Value);
+        
+        stream.Pad(512);
     }
 }

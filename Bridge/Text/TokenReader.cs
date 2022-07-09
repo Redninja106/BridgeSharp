@@ -31,6 +31,9 @@ internal sealed class TokenReader
 
     public Token Read()
     {
+        if (IsAtEnd)
+            return default;
+
         var result = GetCurrent();
 
         if (returned is not null)

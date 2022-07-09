@@ -50,7 +50,17 @@ public sealed class CodeBuilder
     {
         return routine.AddLocal(name);
     }
+    
+    public void EmitCallIf(string name)
+    {
+        EmitCallIf(this.routine.Module.AddDataEntry(name));
+    }
 
+    public void EmitCallIf(DataEntry name)
+    {
+        routine.EmitInstruction(new DataEntryInstruction(OpCode.CallIf, name));
+    }
+    
     public void EmitCall(string name)
     {
         EmitCall(this.routine.Module.AddDataEntry(name));

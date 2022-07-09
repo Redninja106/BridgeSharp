@@ -10,6 +10,12 @@ namespace Bridge.Text;
 
 internal static class Scanner
 {
+    public static IEnumerable<Token> Scan(string source)
+    {
+        var reader = new StringReader(source);
+        return Scan(reader);
+    }
+
     public static IEnumerable<Token> Scan(TextReader source)
     {
         string token = string.Empty;
@@ -35,7 +41,7 @@ internal static class Scanner
             current = source.Read();
         }
 
-        if (!string.IsNullOrWhiteSpace(token))
+        if (!string.IsNullOrWhiteSpace(token) && !IsComment(token))
             yield return new Token(token);
     }
 

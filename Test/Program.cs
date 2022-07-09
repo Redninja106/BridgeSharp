@@ -1,22 +1,7 @@
-﻿using Bridge.Text;
+﻿using Bridge;
 
-var scanned = Scanner.Scan(new StringReader(@"define hello {
-    pushconst 0
-    print
-    add
-    sub
-    mul
-    div
-    pop x
-    pop .x
-    pop @x
-    push x
-    push .x
-    push @x
-}"));
+var mod = Module.Parse("test.br");
+mod.Dump(Console.Out);
 
-var parser = new Parser();
-
-parser.AddSource(new TokenReader(scanned));
-
-parser.GetResult().Dump(Console.Out);
+var i = new Interpreter();
+i.RunModule(mod);a

@@ -1,4 +1,5 @@
 ﻿using Bridge.Binary;
+using Bridge.Text;
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
@@ -14,10 +15,12 @@ namespace Bridge;
 public sealed class Module
 {
     // file signature, identifies a bridge binary file (.bll)
-    private static readonly byte[] bridgeSignature = new byte[] { (byte)'b', (byte)'r', 0, 0 };
+    private static readonly byte[] bridgeSignature = new byte[] { (byte)'b', (byte)'l', (byte)'l', 0 };
 
     // each module is an ordered set of sections
     private readonly ModuleSection[] sections;
+
+    public bool IsExecutable => GetSection<ModuleCodeSection>().Routines.Any(r => GetDataEntryString(r.Name) == "main");
 
     /// <summary>
     /// A list of the module's sections.
@@ -114,9 +117,20 @@ public sealed class Module
         throw new NotImplementedException();
     }
 
-    public static Module Parse(string source)
+    public static Module Parse(string file)
     {
-        return null;
+        using var fs = File.OpenRead(file);
+        using var reader = new StreamReader(fs);
+        return Parse(reader);
+    }
+    
+    public static Module Parse(TextReader reader)
+    {
+        var tokens = Scanner.Scan(reader);
+
+        var parser = new ModuleParser();
+        parser.AddSource(new TokenReader(tokens));
+        return parser.GetResult();
     }
 
     /// <summary>

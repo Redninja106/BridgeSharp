@@ -11,4 +11,10 @@
     <ProjectReference Include="..\Bridge\Bridge.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="test.br">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

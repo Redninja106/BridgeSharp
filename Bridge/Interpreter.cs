@@ -13,14 +13,14 @@ public sealed class Interpreter
 
     public void RunModule(Module module)
     {
+        if (!module.IsExecutable)
+            throw new Exception("This module is not executable (has no 'main' routine)");
+
         this.module = module;
         this.stack = new();
 
         var code = module.GetSection<ModuleCodeSection>();
-        var main = code.Defines.FirstOrDefault(d => module.GetDataEntryString(d.Name) == "main");
-        
-        if (main == null)
-            throw new InvalidOperationException("Module has no 'main' entrypoint");
+        var main = code.Routines.FirstOrDefault(d => module.GetDataEntryString(d.Name) == "main");
 
         RunRoutine(main);
     }
@@ -104,12 +104,16 @@ public sealed class Interpreter
         {
             case OpCode.Call:
                 var codeSection = module.GetSection<ModuleCodeSection>();
-                var routine = codeSection.Defines.First(d => d.Name == instruction.DataEntry);
+                var routine = codeSection.Routines.First(d => d.Name == instruction.DataEntry);
                 
                 if (routine is null)
                     throw new Exception("Evaluation Error: Define not found");
 
                 RunRoutine(routine);
+                break;
+            case OpCode.CallIf:
+                if (stack.Pop() != 0)
+                    goto case OpCode.Call;
                 break;
             default:
                 throw new Exception("Evaluation Error: Unknown instruction or bad instruction state");

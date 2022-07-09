@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Bridge.Text;
 
-internal sealed class Parser
+internal sealed class ModuleParser
 {
     Module result = Module.Create();
 
@@ -57,6 +57,14 @@ internal sealed class Parser
                 case OpCode.Pop:
                     ReadLocalInstructionArgs(routine, reader, out local, out accessMode);
                     routine.EmitPush(local, accessMode);
+                    break;
+                case OpCode.Call:
+                    var callTarget = reader.Read(TokenKind.Identifier);
+                    routine.EmitCall(callTarget.Value);
+                    break;
+                case OpCode.CallIf:
+                    var callTargetIf = reader.Read(TokenKind.Identifier);
+                    routine.EmitCallIf(callTargetIf.Value);
                     break;
                 default:
                     routine.Emit(opCode);

@@ -29,7 +29,7 @@ public record LocalInstruction(OpCode OpCode, LocalAccessMode Mode, byte Local) 
             LocalAccessMode.Dereference => ".",
             _ => string.Empty,
         };
-
+        
         return $"{OpCode.ToString().ToLower()} {prefix}{module.GetDataEntryString(define.GetLocalNameEntry(Local))}";
     }
 }
@@ -44,7 +44,7 @@ public record ConstInstruction(OpCode OpCode, long Value) : Instruction(OpCode)
 
 public record DataEntryInstruction(OpCode OpCode, DataEntry DataEntry) : Instruction(OpCode)
 {
-    public override string ToString(Module module, Routine define)
+    public override string ToString(Module module, Routine define) 
     {
         return $"{OpCode.ToString().ToLower()} {module.GetDataEntryString(DataEntry)}";
     }

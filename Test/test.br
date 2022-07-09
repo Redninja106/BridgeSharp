@@ -1,14 +1,43 @@
-﻿define hello {
-    pushconst 0
-    print
-    add
-    sub
-    mul
-    div
-    pop x
-    pop .x
-    pop @x
-    push x
-    push .x
-    push @x
+﻿define main {
+    pushconst 5
+	call fib
 }
+
+define fib {
+    pop n
+	push n
+	callif {
+		i
+	}
+
+
+	callif $anonymous_routine
+}
+
+define $anonymous_routine {
+}
+
+define ret0 { 
+	pushconst 0
+}
+
+/*
+define myString "hello world"
+
+define main {
+    push @myString
+	printstr
+}
+
+define main {
+}
+
+define loopStart {
+    
+}
+
+define loopBody {
+    
+    callif loopBody
+}
+*/

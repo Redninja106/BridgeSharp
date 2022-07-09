@@ -11,7 +11,7 @@ public sealed class ModuleCodeSection : ModuleSection
 {
     public override SectionKind Kind => SectionKind.Code;
 
-    internal IReadOnlyList<Routine> Defines => defines;
+    internal IReadOnlyList<Routine> Routines => defines;
 
     List<Routine> defines = new();
 
@@ -44,10 +44,14 @@ public sealed class ModuleCodeSection : ModuleSection
             {
                 case OpCode.Define:
                     var name = stream.Read<DataEntry>();
-                    var localCount = stream.Read<byte>();
-                    var locals = new DataEntry[localCount];
-                    stream.Read(locals.AsSpan());
-                    builder = AddRoutine(name, locals);
+                    builder = AddRoutine(name);
+                    break;
+                case OpCode.CallIf:
+                    builder.EmitCallIf(stream.Read<DataEntry>());
+                    break;
+                case OpCode.Local:
+                    name = stream.Read<DataEntry>();
+                    builder.EmitLocal(Module.GetDataEntryString(name));
                     break;
                 case OpCode.PushConst:
                     builder.EmitPushConst(stream.Read<long>());
@@ -76,8 +80,12 @@ public sealed class ModuleCodeSection : ModuleSection
         {
             stream.Write(OpCode.Define);
             stream.Write(define.Name);
-            stream.Write((byte)define.Locals.Count);
-            stream.Write(CollectionsMarshal.AsSpan(define.Locals));
+
+            foreach (var local in define.Locals)
+            {
+                stream.Write(OpCode.Local);
+                stream.Write(local);
+            }
 
             foreach (var instruction in define.Instructions)
             {

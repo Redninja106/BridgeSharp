@@ -1,78 +1,75 @@
-﻿using Bridge.Binary;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Bridge;
 
-public sealed class CodeBuilder
+public record struct Local(ushort Value);
+public record struct Label(int Value);
+
+public class CodeBuilder : IBuilder
 {
-    Routine routine;
-
-    internal CodeBuilder(Routine define)
+    private protected readonly List<Instruction> instructions = new();
+    private protected readonly List<DataType> locals = new();
+    private protected readonly List<int> labelLocations = new();
+    private readonly int blockID;
+    
+    internal CodeBuilder(int blockID)
     {
-        this.routine = define;
+        this.blockID = blockID;
     }
 
-    public void Emit(OpCode op)
+    public virtual void Emit(Instruction instruction)
     {
-        routine.EmitInstruction(new(op));
-    }
-
-    public void EmitPushConst(long value)
-    {
-        routine.EmitInstruction(new ConstInstruction(OpCode.PushConst, value));
+        instructions.Add(instruction);
     }
     
-    public void EmitPush(string name, LocalAccessMode mode = LocalAccessMode.Normal)
+    public virtual Local AddLocal(DataType type)
     {
-        EmitPush(routine.GetLocal(name), mode);
+        if (type is DataType.Void)
+            throw new ArgumentException("locals cannot be void!", nameof(type));
+
+        if (locals.Count >= ushort.MaxValue)
+            throw new ArgumentException("cannot have >255 locals!", nameof(type));
+
+        var id = (ushort)locals.Count;
+        locals.Add(type);
+        return new Local(id);
     }
 
-    public void EmitPush(byte local, LocalAccessMode mode = LocalAccessMode.Normal)
+    public virtual Label AddLabel()
     {
-        routine.EmitInstruction(new LocalInstruction(OpCode.Push, mode, local));
+        var index = instructions.Count;
+        var labelId = labelLocations.Count;
+        labelLocations.Add(index);
+        return new Label(labelId);
     }
 
-    public void EmitPop(byte local, LocalAccessMode mode = LocalAccessMode.Normal)
+    // moves a label to the current location
+    public void MoveLabel(Label label)
     {
-        routine.EmitInstruction(new LocalInstruction(OpCode.Pop, mode, local));
+        labelLocations[label.Value] = instructions.Count;
     }
     
-    public void EmitPop(string localName, LocalAccessMode mode = LocalAccessMode.Normal)
+    public virtual void Close()
     {
-        EmitPop(routine.GetLocal(localName), mode);
     }
 
-    public byte EmitLocal(string name)
+    internal IEnumerable<Instruction> GetInstructions()
     {
-        return routine.AddLocal(name);
-    }
-    
-    public void EmitCallIf(string name)
-    {
-        EmitCallIf(this.routine.Module.AddDataEntry(name));
+        return this.instructions;
     }
 
-    public void EmitCallIf(DataEntry name)
+    internal IEnumerable<DataType> GetLocals()
     {
-        routine.EmitInstruction(new DataEntryInstruction(OpCode.CallIf, name));
-    }
-    
-    public void EmitCall(string name)
-    {
-        EmitCall(this.routine.Module.AddDataEntry(name));
+        return this.locals;
     }
 
-    public void EmitCall(DataEntry name)
+    internal IEnumerable<int> GetLabels()
     {
-        routine.EmitInstruction(new DataEntryInstruction(OpCode.Call, name));
-    }
-
-    public bool HasLocal(string name)
-    {
-        return routine.Locals.Any(e => routine.Module.GetDataEntryString(e) == name);
+        return this.labelLocations;
     }
 }

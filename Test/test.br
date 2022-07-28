@@ -1,43 +1,9 @@
-﻿define main {
-    pushconst 5
-	call fib
+﻿extern i32 messagebox(*,*,*,u32);
+
+define i32 main(i32 argc, *argv) {
+    push* 0
+	push* "hello world\0"
+	push* "wassap\0"
+	push.i32 0
+    call messagebox
 }
-
-define fib {
-    pop n
-	push n
-	callif {
-		i
-	}
-
-
-	callif $anonymous_routine
-}
-
-define $anonymous_routine {
-}
-
-define ret0 { 
-	pushconst 0
-}
-
-/*
-define myString "hello world"
-
-define main {
-    push @myString
-	printstr
-}
-
-define main {
-}
-
-define loopStart {
-    
-}
-
-define loopBody {
-    
-    callif loopBody
-}
-*/

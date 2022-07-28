@@ -1,0 +1,29 @@
+﻿routine main 
+{
+  push.const.i32 10
+  call test
+  return
+}
+
+routine test(i32) 
+{
+  local.i32
+  push.const.i32 0
+  pop.local 0
+  jump loopcond
+loopbody:
+  push.local 0
+  push.const.i32 1
+  add.i32
+  pop.local 0
+
+  push.local 0
+  print.i32
+
+loopcond:
+  push.arg 0
+  push.local 0
+  if.lt.i32 
+    jump loopcond
+  return
+}

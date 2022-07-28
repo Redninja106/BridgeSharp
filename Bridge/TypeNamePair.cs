@@ -4,7 +4,5 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bridge.Text;
-internal class ModuleWriter
-{
-}
+namespace Bridge;
+public record struct TypeNamePair(DataType Type, string Name);

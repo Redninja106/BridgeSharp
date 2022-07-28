@@ -4,11 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bridge.Binary;
-
-public enum SectionKind : byte
+namespace Bridge;
+public record InlineDefinition(int ID, string Name) : Definition(ID, Name)
 {
-    Header,
-    Code,
-    Data,
+    
 }

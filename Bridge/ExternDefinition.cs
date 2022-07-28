@@ -5,10 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Bridge;
-
-public enum LocalAccessMode : byte
+public record ExternDefinition(int ID, string Name, string Library, DataType ReturnType, DataType[] Parameters) : Definition(ID, Name)
 {
-    Normal,
-    Dereference,
-    Address,
 }

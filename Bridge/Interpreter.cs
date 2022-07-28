@@ -179,6 +179,8 @@ public unsafe class Interpreter : IDisposable
 
     private void EvalTypedInstruction(Instruction<DataType> instruction)
     {
+        TypedValue left, right;
+        
         switch (instruction.OpCode)
         {
             case OpCode.Load:
@@ -191,19 +193,29 @@ public unsafe class Interpreter : IDisposable
                 Console.WriteLine(Pop(instruction.Arg1));
                 break;
             case OpCode.Add:
-                Push(BinaryOp(Pop(instruction.Arg1), Pop(instruction.Arg1), (a, b) => a + b));
+                right = Pop(instruction.Arg1);
+                left = Pop(instruction.Arg1);
+                Push(BinaryOp(left, right, (a, b) => a + b));
                 break;
             case OpCode.Subtract:
-                Push(BinaryOp(Pop(instruction.Arg1), Pop(instruction.Arg1), (a, b) => a - b));
+                right = Pop(instruction.Arg1);
+                left = Pop(instruction.Arg1);
+                Push(BinaryOp(left, right, (a, b) => a - b));
                 break;
             case OpCode.Multiply:
-                Push(BinaryOp(Pop(instruction.Arg1), Pop(instruction.Arg1), (a, b) => a * b));
+                right = Pop(instruction.Arg1);
+                left = Pop(instruction.Arg1);
+                Push(BinaryOp(left, right, (a, b) => a * b));
                 break;
             case OpCode.Divide:
-                Push(BinaryOp(Pop(instruction.Arg1), Pop(instruction.Arg1), (a, b) => a / b));
+                right = Pop(instruction.Arg1);
+                left = Pop(instruction.Arg1);
+                Push(BinaryOp(left, right, (a, b) => a / b));
                 break;
             case OpCode.Modulo:
-                Push(BinaryOp(Pop(instruction.Arg1), Pop(instruction.Arg1), (a, b) => a % b));
+                right = Pop(instruction.Arg1);
+                left = Pop(instruction.Arg1);
+                Push(BinaryOp(left, right, (a, b) => a % b));
                 break;
             case OpCode.Negate:
                 Push(UnaryOp(Pop(instruction.Arg1), x => -x));

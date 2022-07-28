@@ -258,16 +258,22 @@ public unsafe class Interpreter : IDisposable
 
     private bool Compare(ComparisonKind kind, DataType type)
     {
+        if (kind is ComparisonKind.Zero)
+            return UnaryCompOp(Pop(type), x => x == 0);
+        if (kind is ComparisonKind.NotZero)
+            return UnaryCompOp(Pop(type), x => x != 0);
+
+        var right = Pop(type);
+        var left = Pop(type);
+
         switch (kind)
         {
-            case ComparisonKind.LessThan:           return BinaryCompOp(Pop(type), Pop(type), (a, b) => a < b);
-            case ComparisonKind.LessThanEqual:      return BinaryCompOp(Pop(type), Pop(type), (a, b) => a <= b);
-            case ComparisonKind.GreaterThan:        return BinaryCompOp(Pop(type), Pop(type), (a, b) => a > b);
-            case ComparisonKind.GreaterThanEqual:   return BinaryCompOp(Pop(type), Pop(type), (a, b) => a >= b);
-            case ComparisonKind.Equal:              return BinaryCompOp(Pop(type), Pop(type), (a, b) => a == b);
-            case ComparisonKind.NotEqual:           return BinaryCompOp(Pop(type), Pop(type), (a, b) => a != b);
-            case ComparisonKind.Zero:               return UnaryCompOp(Pop(type), x => x == 0);
-            case ComparisonKind.NotZero:            return UnaryCompOp(Pop(type), x => x != 0);
+            case ComparisonKind.LessThan:           return BinaryCompOp(left, right, (a, b) => a < b);
+            case ComparisonKind.LessThanEqual:      return BinaryCompOp(left, right, (a, b) => a <= b);
+            case ComparisonKind.GreaterThan:        return BinaryCompOp(left, right, (a, b) => a > b);
+            case ComparisonKind.GreaterThanEqual:   return BinaryCompOp(left, right, (a, b) => a >= b);
+            case ComparisonKind.Equal:              return BinaryCompOp(left, right, (a, b) => a == b);
+            case ComparisonKind.NotEqual:           return BinaryCompOp(left, right, (a, b) => a != b);
             default:                                throw new Exception();
         }
     }

@@ -96,7 +96,7 @@ public readonly record struct TypedValue(ulong Bits, DataType Type)
             DataType.I32 or DataType.U32 or DataType.F32 => 4,
             DataType.I16 or DataType.U16 => 2,
             DataType.I8 or DataType.U8 => 1,
-            DataType.Pointer => Unsafe.SizeOf<nint>(),
+            DataType.Pointer => Unsafe.SizeOf<nuint>(),
             _ => throw new Exception(),
         };
     }

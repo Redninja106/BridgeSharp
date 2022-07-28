@@ -23,9 +23,13 @@ public record Instruction(OpCode OpCode)
     public static Instruction Pop(DataType type) => new Instruction<StackOpKind, DataType>(OpCode.Pop, StackOpKind.Const, type);
     public static Instruction Pop(Local local) => new Instruction<StackOpKind, Local>(OpCode.Pop, StackOpKind.Local, local);
     public static Instruction PopArg(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Pop, StackOpKind.Arg, arg);
-
-    public static Instruction Loada(byte arg) => new Instruction<byte>(OpCode.Loada, arg);
-    public static Instruction Loada(Local local) => new Instruction<Local>(OpCode.Loada, local);
+    public static Instruction PushAddress(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Push, StackOpKind.Address, arg);
+    public static Instruction PushAddress(Local local) => new Instruction<StackOpKind, Local>(OpCode.Push, StackOpKind.Address, local);
+    public static Instruction PushFramePointer() => new Instruction<StackOpKind>(OpCode.Push, StackOpKind.Fp);
+    public static Instruction PopFramePointer() => new Instruction<StackOpKind>(OpCode.Pop, StackOpKind.Fp);
+    public static Instruction PushStackPointer() => new Instruction<StackOpKind>(OpCode.Push, StackOpKind.Sp);
+    public static Instruction PopStackPointer() => new Instruction<StackOpKind>(OpCode.Pop, StackOpKind.Sp);
+    public static Instruction PushResource(Index resourceIndex) => new Instruction<StackOpKind, Index>(OpCode.Push, StackOpKind.Resource, resourceIndex);
 
     public static Instruction Load(DataType type) => new Instruction<DataType>(OpCode.Load, type);
     public static Instruction Store(DataType type) => new Instruction<DataType>(OpCode.Load, type);
@@ -41,6 +45,7 @@ public record Instruction(OpCode OpCode)
     public static Instruction Negate(DataType type) => new Instruction<DataType>(OpCode.Negate, type);
 
     public static Instruction Print(DataType type) => new Instruction<DataType>(OpCode.Print, type);
+    public static Instruction PrintChar(DataType type) => new Instruction<DataType>(OpCode.PrintChar, type);
     public static Instruction Compare(ComparisonKind kind, DataType type) => new Instruction<ComparisonKind, DataType>(OpCode.Compare, kind, type);
 }
 

@@ -44,17 +44,29 @@ store.i32
  
 
 
-// uses store to set a local to 69
-routine writetest()
+//
+// if true then 1 else 0
+//
+//
+//
+//
+routine adias0pdkas(*,i32,f32,i8,*)
 {
-	local.i32
+	push.const* 0x100000
+	load.i32
 
-	load.local 0
-	push.const.i32 69
+	push.const* 0x100000
+	push.const.push 69
 	store.i32
 	
-	push.local 0
-	print
-	
-	return
+
+
+	if.notzero.i32 jump true
+false:
+	// false stuff
+	jump end
+true:
+	// true stuff
+end:
+
 }

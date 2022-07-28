@@ -15,6 +15,7 @@ public unsafe class Interpreter : IDisposable
 
     NativeLibraryHandler libraryHandler = new();
     Module module;
+    Dictionary<Index, nuint> resources = new();
     byte* stack;
     nuint sp, fp;
     int ip;
@@ -62,9 +63,6 @@ public unsafe class Interpreter : IDisposable
                     throw new Exception();
                 ip = currentRoutine.LabelLocations[labelInstruction.Arg1.Value] - 1;
                 break;
-            case Instruction when instruction.OpCode is OpCode.Loada:
-                EvalLoada(instruction);
-                break;
             case Instruction<int> ptrInstruction:
                 EvalPtrInstruction(ptrInstruction);
                 break;
@@ -83,23 +81,6 @@ public unsafe class Interpreter : IDisposable
             default:
                 break;
         }
-    }
-
-    private void EvalLoada(Instruction instruction)
-    {
-        if (instruction is Instruction<byte> argInst)
-        {
-            var ptr = GetArgumentLocation(argInst.Arg1);
-            Push(ptr);
-            return;
-        }
-        if (instruction is Instruction<Local> localInst)
-        {
-            var ptr = GetLocalLocation(localInst.Arg1);
-            Push(ptr);
-            return;
-        }
-        throw new Exception();
     }
 
     private void EvalCompInstruction(Instruction<ComparisonKind, DataType> instruction)
@@ -165,11 +146,56 @@ public unsafe class Interpreter : IDisposable
             case Instruction<StackOpKind, DataType> typedInstruction when instruction.OpCode is OpCode.Pop:
                 Pop(typedInstruction.Arg2);
                 break;
-            case Instruction<StackOpKind>:
+            case Instruction<StackOpKind, Index> resourceInstruction:
+                Push(LoadResource(resourceInstruction.Arg2));
+                break;
+            case Instruction<StackOpKind> when instruction.OpCode is OpCode.Push:
+                switch (instruction.Arg1)
+                {
+                    case StackOpKind.Sp:
+                        Push(sp);
+                        break;
+                    case StackOpKind.Fp:
+                        Push(fp);
+                        break;
+                    default:
+                        throw new Exception();
+                }
+                break;
+            case Instruction<StackOpKind> when instruction.OpCode is OpCode.Pop:
+                switch (instruction.Arg1)
+                {
+                    case StackOpKind.Sp:
+                        sp = Pop<nuint>();
+                        break;
+                    case StackOpKind.Fp:
+                        fp = Pop<nuint>();
+                        break;
+                    default:
+                        throw new Exception();
+                }
                 break;
             default:
                 throw new Exception();
         }
+    }
+
+    private nuint LoadResource(Index index)
+    {
+        if (resources.TryGetValue(index, out var loadedResource))
+        {
+            return loadedResource;
+        }
+
+        var bytes = module.Resources.GetResource(index);
+        
+        var resource = NativeMemory.Alloc((nuint)bytes.Length);
+        
+        var resourceSpan = new Span<byte>(resource, bytes.Length);
+        bytes.CopyTo(resourceSpan);
+
+        this.resources.Add(index, (nuint)resource);
+        return (nuint)resource;
     }
 
     //private nuint IndexToPointer(int index)
@@ -184,7 +210,9 @@ public unsafe class Interpreter : IDisposable
         switch (instruction.OpCode)
         {
             case OpCode.Load:
-                Push(Read(instruction.Arg1, Pop<nuint>()));
+                var address = Pop<nuint>();
+                var val = Read(instruction.Arg1, address);
+                Push(val);
                 break;
             case OpCode.Store:
                 Write(Pop(instruction.Arg1), Pop<nuint>());
@@ -195,7 +223,14 @@ public unsafe class Interpreter : IDisposable
             case OpCode.Add:
                 right = Pop(instruction.Arg1);
                 left = Pop(instruction.Arg1);
-                Push(BinaryOp(left, right, (a, b) => a + b));
+
+                Push(BinaryOp(left, right, (a, b) =>
+                {
+                    if (a is nuint c && b is nuint d)
+                        return c + d;
+
+                    return a + b;
+                }));
                 break;
             case OpCode.Subtract:
                 right = Pop(instruction.Arg1);
@@ -225,8 +260,17 @@ public unsafe class Interpreter : IDisposable
                     throw new Exception();
                 Push(Cast(Pop(castInst.Arg1), castInst.Arg2));
                 break;
-            default:
+            case OpCode.PrintChar:
+                var type = instruction.Arg1;
+
+                if (type is DataType.F32 or DataType.F64)
+                    throw new Exception();
+                
+                TypedValue value = Pop(type);
+                Console.Write((char)ToDynamic(value));
                 break;
+            default:
+                throw new Exception();
         }
     }
 
@@ -378,7 +422,7 @@ public unsafe class Interpreter : IDisposable
     
     private nuint GetArgumentLocation(byte id)
     {
-        nuint location = fp - 8;
+        nuint location = fp - 12;
         for (int i = currentRoutine.Parameters.Length - 1; i >= id; i--)
         {
             location -= (nuint)TypedValue.GetDataTypeSize(currentRoutine.Parameters[i]);
@@ -491,7 +535,16 @@ public unsafe class Interpreter : IDisposable
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
+
         NativeMemory.Free(this.stack);
+
+        libraryHandler.Dispose();
+
+        foreach (var (index, resource) in resources)
+        {
+            NativeMemory.Free((void*)resource);
+        }
     }
 
     class NativeLibraryHandler : IDisposable
@@ -539,15 +592,20 @@ public unsafe class Interpreter : IDisposable
 
         public void Dispose()
         {
-            foreach (var lib in libraries.Values)
-            {
-                NativeLibrary.Free(lib.Item1);
-            }
+            //foreach (var lib in libraries.Values)
+            //{
+            //    NativeLibrary.Free(lib.Item1);
+            //}
         }
 
         private TypedValue Call(IntPtr fn, params TypedValue[] args)
         {
             return default;
         }
+    }
+
+    ~Interpreter()
+    {
+        Dispose();
     }
 }

@@ -10,12 +10,15 @@ public sealed class Module
 {
     private Definition[] definitions;
 
+    public ResourceTable Resources { get; }
+
     public IEnumerable<Definition> Definitions => definitions;
     public IEnumerable<RoutineDefinition> Routines => definitions.OfType<RoutineDefinition>();
     public IEnumerable<ExternDefinition> Externs => definitions.OfType<ExternDefinition>();
 
-    internal Module(IEnumerable<Definition> declarations)
+    internal Module(IEnumerable<Definition> declarations, IEnumerable<byte[]> resources)
     {
+        Resources = new(resources);
         this.definitions = declarations.ToArray();
     }
 

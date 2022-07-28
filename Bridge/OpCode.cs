@@ -13,8 +13,6 @@ public enum OpCode : byte
     Push,
     // pops a value from the stack, optionally into a local or arg
     Pop,
-    // loads the address of an arg or local onto the stack
-    Loada,
     // pops a pointer from the stack and pushes the value at that location
     Load,
     // pops a value from the stack, then a pointer, and writes the value to the pointer
@@ -59,4 +57,5 @@ public enum OpCode : byte
 
     // prints the top value on the stack to the console
     Print,
+    PrintChar,
 }

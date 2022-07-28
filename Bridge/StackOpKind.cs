@@ -7,4 +7,6 @@ internal enum StackOpKind : byte
     Arg,
     Fp,
     Sp,
+    Address,
+    Resource,
 }

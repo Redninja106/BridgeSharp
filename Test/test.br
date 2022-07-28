@@ -7,3 +7,24 @@ define i32 main(i32 argc, *argv) {
 	push.i32 0
     call messagebox
 }
+
+define printstr(*)
+{
+start:
+	push.arg 0
+	load.u8
+	
+	if.zero.u8
+		return
+
+	push.arg 0
+	load.u8
+	printchar.u8
+	
+	push.arg 0
+	push.const* 1
+	add*
+	pop.arg 0
+	
+	jump start
+}

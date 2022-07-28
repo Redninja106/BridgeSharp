@@ -1,0 +1,24 @@
+﻿define test
+{
+	push.const.i32 60
+	push.const.i32 9
+	add.i32
+	print.i32
+}
+define i32 add(i32,i32)
+{
+	local.i32 a // local 0
+	// push.local 0 here is the same as push.local a
+	push.arg 0
+	push.arg 1
+	mode.i32
+	add.i4
+	ret
+	push.fp
+}
+
+// multiply top two on stack then add to third
+inline mad  {
+	mul.i4
+	add.i4
+}

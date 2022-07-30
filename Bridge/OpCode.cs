@@ -39,19 +39,18 @@ public enum OpCode : byte
     Modulo,
     // pops x, performs 0-x, and pushes result
     Negate,
-    // to be implemented
+    // pops x, pushes x+1
+    Increment,
+    // pops x, pushes x-1
+    Decrement,
+    // pops x, y, pushes x & y, float types not supported
     And,
-    // to be implemented
+    // pops x, y, pushes x | y, float types not supported
     Or,
-    // to be implemented
+    // pops x, y, pushes x ^ y, float types not supported
     Xor,
-    // to be implemented
+    // pops x, pushes ~x, float types not supported
     Not,
-    // pops two values off the stack, shifts the second left by the first, and pushes the result
-    Shl,
-    // pops two values off the stack, shifts the second right by the first, and pushes the result
-    Shr,
-
     // performs a comparason between top two numbers on the stack and pushes an i8 1 if true, or 0 if false
     Compare,
 

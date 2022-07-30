@@ -269,6 +269,32 @@ public unsafe class Interpreter : IDisposable
                 TypedValue value = Pop(type);
                 Console.Write((char)ToDynamic(value));
                 break;
+            case OpCode.Increment:
+                var operand = Pop(instruction.Arg1);
+                Push(UnaryOp(operand, x => x + 1));
+                break;
+            case OpCode.Decrement:
+                operand = Pop(instruction.Arg1);
+                Push(UnaryOp(operand, x => x - 1));
+                break;
+            case OpCode.And:
+                right = Pop(instruction.Arg1);
+                left = Pop(instruction.Arg1);
+                Push(BinaryOp(left, right, (a, b) => a & b));
+                break;
+            case OpCode.Or:
+                right = Pop(instruction.Arg1);
+                left = Pop(instruction.Arg1);
+                Push(BinaryOp(left, right, (a, b) => a | b));
+                break;
+            case OpCode.Xor:
+                right = Pop(instruction.Arg1);
+                left = Pop(instruction.Arg1);
+                Push(BinaryOp(left, right, (a, b) => a ^ b));
+                break;
+            case OpCode.Not:
+                Push(UnaryOp(Pop(instruction.Arg1), x => ~x));
+                break;
             default:
                 throw new Exception();
         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,8 +24,8 @@ public record Instruction(OpCode OpCode)
     public static Instruction Pop(DataType type) => new Instruction<StackOpKind, DataType>(OpCode.Pop, StackOpKind.Const, type);
     public static Instruction Pop(Local local) => new Instruction<StackOpKind, Local>(OpCode.Pop, StackOpKind.Local, local);
     public static Instruction PopArg(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Pop, StackOpKind.Arg, arg);
-    public static Instruction PushAddress(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Push, StackOpKind.Address, arg);
-    public static Instruction PushAddress(Local local) => new Instruction<StackOpKind, Local>(OpCode.Push, StackOpKind.Address, local);
+    public static Instruction PushAddress(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Push, StackOpKind.ArgAddress, arg);
+    public static Instruction PushAddress(Local local) => new Instruction<StackOpKind, Local>(OpCode.Push, StackOpKind.LocalAddress, local);
     public static Instruction PushFramePointer() => new Instruction<StackOpKind>(OpCode.Push, StackOpKind.Fp);
     public static Instruction PopFramePointer() => new Instruction<StackOpKind>(OpCode.Pop, StackOpKind.Fp);
     public static Instruction PushStackPointer() => new Instruction<StackOpKind>(OpCode.Push, StackOpKind.Sp);
@@ -36,13 +37,19 @@ public record Instruction(OpCode OpCode)
 
     public static Instruction Cast(DataType from, DataType to) => new Instruction<DataType, DataType>(OpCode.Cast, from, to);
 
-
     public static Instruction Add(DataType type) => new Instruction<DataType>(OpCode.Add, type);
     public static Instruction Subtract(DataType type) => new Instruction<DataType>(OpCode.Subtract, type);
     public static Instruction Multiply(DataType type) => new Instruction<DataType>(OpCode.Multiply, type);
     public static Instruction Divide(DataType type) => new Instruction<DataType>(OpCode.Divide, type);
     public static Instruction Modulo(DataType type) => new Instruction<DataType>(OpCode.Modulo, type);
     public static Instruction Negate(DataType type) => new Instruction<DataType>(OpCode.Negate, type);
+
+    public static Instruction Increment(DataType type) => new Instruction<DataType>(OpCode.Increment, type);
+    public static Instruction Decrement(DataType type) => new Instruction<DataType>(OpCode.Decrement, type);
+    public static Instruction And(DataType type) => new Instruction<DataType>(OpCode.And, type);
+    public static Instruction Or(DataType type) => new Instruction<DataType>(OpCode.Or, type);
+    public static Instruction Xor(DataType type) => new Instruction<DataType>(OpCode.Xor, type);
+    public static Instruction Not(DataType type) => new Instruction<DataType>(OpCode.Not, type);
 
     public static Instruction Print(DataType type) => new Instruction<DataType>(OpCode.Print, type);
     public static Instruction PrintChar(DataType type) => new Instruction<DataType>(OpCode.PrintChar, type);

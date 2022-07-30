@@ -4,11 +4,16 @@ namespace Bridge;
 
 public sealed class ResourceTable
 {
-    List<byte[]> resources = new();
+    List<(ResourceKind, byte[])> resources = new();
 
-    internal ResourceTable(IEnumerable<byte[]> resources)
+    internal ResourceTable(IEnumerable<(ResourceKind, byte[])> resources)
     {
         this.resources = new(resources);
+    }
+
+    public ResourceKind GetKind(Index resource)
+    {
+        return resources[resource].Item1;
     }
 
     public Index Find(string resource)
@@ -43,21 +48,28 @@ public sealed class ResourceTable
     public bool TryFind(Span<byte> bytes, out Index index)
     {
         index = default;
-        foreach (var value in resources)
+        foreach (var (kind, value) in resources)
         {
             if (bytes.SequenceEqual(value))
             { 
-                index = resources.IndexOf(value);
+                index = resources.IndexOf((kind,value));
                 return true;
             } 
         }
 
         return false;
     }
-
+    
     public ReadOnlySpan<byte> GetResource(Index index)
     {
-        return resources[index];
+        return GetResource(index, out _);
+    }
+
+    public ReadOnlySpan<byte> GetResource(Index index, out ResourceKind kind)
+    {
+        byte[] result; 
+        (kind, result) = resources[index];
+        return result;
     }
 
     public string GetResourceString(Index index)

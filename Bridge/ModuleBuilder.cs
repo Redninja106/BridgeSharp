@@ -10,7 +10,7 @@ public class ModuleBuilder
 {
     private readonly List<IBuilder> builders = new();
     private readonly List<Definition> definitions = new();
-    private readonly List<byte[]> resources = new();
+    private readonly List<(ResourceKind, byte[])> resources = new();
 
     public RoutineBuilder AddRoutine(string name)
     {
@@ -32,24 +32,34 @@ public class ModuleBuilder
     
     public Index AddResource(string resource)
     {
-        return AddResource(resource, Encoding.Default);
+        return AddResource(resource, Encoding.UTF8);
     }
 
     public Index AddResource(string resource, Encoding encoding)
     {
         Span<byte> bytes = stackalloc byte[encoding.GetByteCount(resource)];
         encoding.GetBytes(resource, bytes);
-        return AddResource(bytes);
+        return AddResource(bytes, encoding.BodyName switch
+        {
+            "utf-8" => ResourceKind.String8,
+            "utf-16" => ResourceKind.String16,
+            _ => ResourceKind.Unknown
+        });
     } 
     
     public Index AddResource(ReadOnlySpan<byte> bytes)
     {
+        return AddResource(bytes, ResourceKind.Unknown);
+    }
+
+    public Index AddResource(ReadOnlySpan<byte> bytes, ResourceKind kind)
+    {
         var index = (Index)resources.Count;
-        
+
         var resource = new byte[bytes.Length];
         bytes.CopyTo(resource);
 
-        resources.Add(resource);
+        resources.Add((kind, resource));
 
         return index;
     }

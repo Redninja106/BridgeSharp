@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 using CIL = System.Reflection.Emit;
 using CILModuleBuilder = System.Reflection.Emit.ModuleBuilder;
-using CILOpCode = System.Reflection.Emit.OpCode;
+using NativeCallingConvention = System.Runtime.InteropServices.CallingConvention;
 
 namespace Bridge;
 
@@ -18,9 +14,10 @@ namespace Bridge;
 internal class CILCompiler
 {
     private readonly Module module;
-    private readonly List<(RoutineDefinition Routine, MethodBuilder Method)> methodBuilders = new();
-    private FieldInfo dumpField;
-    Stack<CIL.Label> ifs = new();
+    private readonly List<(Definition Definition, MethodBuilder Method)> methodBuilders = new();
+    private Stack<CIL.Label> ifs = new();
+    private FieldInfo resources;
+    private int[] resourceOffsets;
     
     public CILCompiler(Module module)
     {
@@ -29,11 +26,23 @@ internal class CILCompiler
 
     public MethodInfo Compile(AssemblyBuilder builder)
     {
-        var moduleBuilder = builder.DefineDynamicModule("module");
-        var typeBuilder = moduleBuilder.DefineType("Program");
+        var moduleBuilder = builder.DefineDynamicModule("smodule");
+        var typeBuilder = moduleBuilder.DefineType("__Program");
+        
+        var entrypoint = typeBuilder.DefineMethod("__entrypoint", MethodAttributes.Static | MethodAttributes.Public);
 
-        dumpField = typeBuilder.DefineField("dump", typeof(long), FieldAttributes.Static);
-
+        var dataType = typeof(nuint);//.MakePointerType();
+        resources = typeBuilder.DefineField("__resources", dataType, FieldAttributes.Private | FieldAttributes.Static);
+        
+        var offset = 0;
+        List<int> resourceOffsets = new List<int>();
+        foreach (var e in module.ResourceTable.Entries)
+        {
+            resourceOffsets.Add(offset);
+            offset += e.Data.Length;
+        }
+        this.resourceOffsets = resourceOffsets.ToArray();
+        
         foreach (var definition in module.Definitions)
         {
             CompileDefinition(definition, typeBuilder);
@@ -43,9 +52,20 @@ internal class CILCompiler
         {
             CompileDefinitionBody(definition, typeBuilder);
         }
+        
+        var il = entrypoint.GetILGenerator();
+        EmitResources(il, moduleBuilder, typeBuilder);
+
+        il.EmitCall(OpCodes.Call, methodBuilders.Single(pair => pair.Definition.Name is "main").Method, null);
+
+        EmitFreeResources(il);
+        il.Emit(OpCodes.Ret);
 
         var compiledType = typeBuilder.CreateType();
-        return compiledType.GetMethod("main");
+        moduleBuilder.CreateGlobalFunctions();
+        
+        var entry = compiledType.GetMethod("__entrypoint");
+        return entry;
     }
 
     private void CompileDefinitionBody(Definition definition, TypeBuilder typeBuilder)
@@ -67,15 +87,36 @@ internal class CILCompiler
             case RoutineDefinition routineDefinition:
                 CompileRoutine(routineDefinition, typeBuilder);
                 break;
+            case ExternDefinition externDefinition:
+                CompileExtern(externDefinition, typeBuilder);
+                break;
             default:
                 break;
         }
     }
 
+    private void CompileExtern(ExternDefinition externDefinition, TypeBuilder typeBuilder)
+    {
+        var name = externDefinition.Name;
+        var library = externDefinition.Library;
+        var returnType = externDefinition.ReturnType is DataType.Void ? typeof(void) : TypedValue.GetDataTypePrimitive(externDefinition.ReturnType);
+        var parameterTypes = externDefinition.Parameters.Select(TypedValue.GetDataTypePrimitive).ToArray();
+        var callingConvention = externDefinition.CallingConvention switch
+        {
+            CallingConvention.Cdecl => NativeCallingConvention.Cdecl,
+            CallingConvention.StdCall => NativeCallingConvention.StdCall,
+            _ => throw new Exception(),
+        };
+
+        var method = typeBuilder.DefinePInvokeMethod(name, library, MethodAttributes.Static | MethodAttributes.Public, CallingConventions.Standard, returnType, parameterTypes, callingConvention, CharSet.None);
+        method.SetCustomAttribute(typeof(PreserveSigAttribute).GetConstructor(Array.Empty<Type>()), new byte[0]);
+        methodBuilders.Add((externDefinition, method));
+    }
+
     private void CompileRoutine(RoutineDefinition routine, TypeBuilder typeBuilder)
     {
         var returnType = routine.ReturnType is DataType.Void ? typeof(void) : TypedValue.GetDataTypePrimitive(routine.ReturnType);
-        var parameters = routine.Parameters.Select(p=>TypedValue.GetDataTypePrimitive(p)).ToArray();
+        var parameters = routine.Parameters.Select(p => TypedValue.GetDataTypePrimitive(p)).ToArray();
         var method = typeBuilder.DefineMethod(routine.Name, MethodAttributes.Static | MethodAttributes.Public, returnType, parameters);
         
         methodBuilders.Add((routine, method));
@@ -83,7 +124,7 @@ internal class CILCompiler
 
     private void CompileRoutineBody(RoutineDefinition routine, TypeBuilder typeBuilder)
     {
-        var (_, method) = methodBuilders.First(m => m.Routine == routine);
+        var (_, method) = methodBuilders.First(m => m.Definition == routine);
 
         var il = method.GetILGenerator();
 
@@ -135,8 +176,8 @@ internal class CILCompiler
             case OpCode.Store when instruction is Instruction<DataType> storeInstruction:
                 EmitStore(il, storeInstruction);
                 break;
-            case OpCode.Call when instruction is Instruction<int> callInstruction:
-                il.EmitCall(OpCodes.Call, methodBuilders.Single(pair => pair.Routine.ID == callInstruction.Arg1).Method, null);
+            case OpCode.Call when instruction is Instruction<CallMode> callInstruction:
+                EmitCall(il, callInstruction);
                 break;
             case OpCode.Return:
                 il.Emit(OpCodes.Ret);
@@ -203,11 +244,25 @@ internal class CILCompiler
             case OpCode.Compare when instruction is Instruction<ComparisonKind, DataType> compInstruction:
                 EmitCompare(il, compInstruction);
                 break;
-            case OpCode.Print:
-                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("WriteLine", new Type[] { typeof(int) }), null);
+            case OpCode.Print when instruction is Instruction<DataType> printInstruction:
+                Type type = printInstruction.Arg1 switch
+                {
+                    DataType.I8 or DataType.I16 or DataType.I32 => typeof(int),
+                    DataType.U8 or DataType.U16 or DataType.U32 => typeof(uint),
+                    DataType.I64 => typeof(long),
+                    DataType.U64 => typeof(ulong),
+                    DataType.Pointer => typeof(ulong)
+                };
+
+                if (printInstruction.Arg1 is DataType.Pointer)
+                {
+                    il.Emit(OpCodes.Conv_U8);
+                }
+
+                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("WriteLine", new Type[] { type }), null);
                 break;
-            case OpCode.PrintChar:
-                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("WriteLine", new Type[] { typeof(char) }), null);
+            case OpCode.PrintChar when instruction is Instruction<DataType> printCharInstruction:
+                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("Write", new Type[] { typeof(char) }), null);
                 break;
             default:
                 break;
@@ -221,6 +276,47 @@ internal class CILCompiler
             }
         }
     }
+
+    private void EmitCall(ILGenerator il, Instruction<CallMode> instruction)
+    {
+        switch (instruction.Arg1)
+        {
+            case CallMode.Direct:
+            case CallMode.Tail:
+                if (instruction.Arg1 is CallMode.Tail)
+                    il.Emit(OpCodes.Tailcall);
+                
+                var directCallInstruction = (Instruction<CallMode, int>)instruction;
+                il.EmitCall(OpCodes.Call, methodBuilders.Single(pair => pair.Definition.ID == directCallInstruction.Arg2).Method, null);
+                break;
+            case CallMode.Indirect:
+            case CallMode.TailIndirect:
+                if (instruction.Arg1 is CallMode.TailIndirect)
+                    il.Emit(OpCodes.Tailcall);
+
+                var indirectCallInstruction = (Instruction<CallMode, CallInfo>)instruction;
+                var ret = TypedValue.GetDataTypePrimitive(indirectCallInstruction.Arg2.ReturnType);
+                var parameters = indirectCallInstruction.Arg2.Parameters.Select(TypedValue.GetDataTypePrimitive).ToArray();
+
+                if (indirectCallInstruction.Arg2.CallingConvention is CallingConvention.Bridge)
+                {
+                    il.EmitCalli(OpCodes.Call, CallingConventions.Standard, ret, parameters, null);
+                }
+
+                var conv = ConvertCallingConvention(indirectCallInstruction.Arg2.CallingConvention);
+                il.EmitCalli(OpCodes.Calli, conv, ret, parameters);
+                break;
+            default:
+                throw new Exception();
+        }
+    }
+
+    private NativeCallingConvention ConvertCallingConvention(CallingConvention conv) => conv switch
+    {
+        CallingConvention.Cdecl => NativeCallingConvention.Cdecl,
+        CallingConvention.StdCall => NativeCallingConvention.StdCall,
+        _ => throw new Exception()
+    };
 
     private CIL.Label BeginIf(ILGenerator il, Instruction<ComparisonKind, DataType> ifInstruction)
     {
@@ -298,9 +394,12 @@ internal class CILCompiler
         {
             DataType.Pointer => OpCodes.Ldind_I,
             DataType.I64 or DataType.U64 => OpCodes.Ldind_I8,
-            DataType.I32 or DataType.U32 => OpCodes.Ldind_I4,
-            DataType.I16 or DataType.U16 => OpCodes.Ldind_I2,
-            DataType.I8 or DataType.U8 => OpCodes.Ldind_I1,
+            DataType.I32 => OpCodes.Ldind_I4,
+            DataType.I16 => OpCodes.Ldind_I2,
+            DataType.I8 => OpCodes.Ldind_I1,
+            DataType.U32 => OpCodes.Ldind_U4,
+            DataType.U16 => OpCodes.Ldind_U2,
+            DataType.U8 => OpCodes.Ldind_U1,
             DataType.F64 => OpCodes.Ldind_R8,
             DataType.F32 => OpCodes.Ldind_R4,
             _ => throw new Exception()
@@ -347,7 +446,7 @@ internal class CILCompiler
         switch (instruction.Arg1)
         {
             case StackOpKind.Const when instruction is Instruction<StackOpKind, DataType> typedInstruction:
-                il.Emit(OpCodes.Stsfld, dumpField);
+                il.Emit(OpCodes.Pop);
                 break;
             case StackOpKind.Local when instruction is Instruction<StackOpKind, Local> localInstruction:
                 var local = localInstruction.Arg2;
@@ -361,15 +460,12 @@ internal class CILCompiler
                 throw new InvalidOperationException("cannot pop into the address of a local or arg");
             case StackOpKind.Resource:
                 throw new InvalidOperationException("cannot pop into a resource");
-            case StackOpKind.Fp:
-            case StackOpKind.Sp:
-                throw new NotSupportedException("fp and sp ops are not supported!");
             default:
                 throw new Exception();
         }
     }
 
-    private static void EmitPush(ILGenerator il, Instruction<StackOpKind> instruction)
+    private void EmitPush(ILGenerator il, Instruction<StackOpKind> instruction)
     {
         switch (instruction.Arg1)
         {
@@ -418,18 +514,56 @@ internal class CILCompiler
             case StackOpKind.ArgAddress when instruction is Instruction<StackOpKind, byte> argInstruction:
                 il.Emit(OpCodes.Ldarga_S, argInstruction.Arg2);
                 break;
-            case StackOpKind.Resource:
-                throw new NotImplementedException();
-            case StackOpKind.Fp:
-            case StackOpKind.Sp:
-                throw new NotSupportedException("fp and sp ops are not supported!");
+            case StackOpKind.Resource when instruction is Instruction<StackOpKind, Index> resourceInstruction:
+                var offset = resourceOffsets[resourceInstruction.Arg2];
+                il.Emit(OpCodes.Ldsfld, this.resources);
+                il.Emit(OpCodes.Ldc_I4, offset);
+                il.Emit(OpCodes.Add);
+                il.Emit(OpCodes.Conv_U);
+                break;
+            case StackOpKind.Routine when instruction is Instruction<StackOpKind, int> routineInstruction:
+                var method = this.methodBuilders[routineInstruction.Arg2].Method;
+                il.Emit(OpCodes.Ldftn, method);
+                break;
             default:
                 throw new Exception();
         }
     }
 
-    private static void InitResources()
+    private void EmitResources(ILGenerator il, CILModuleBuilder moduleBuilder, TypeBuilder typeBuilder)
     {
+        var length = 0;
+        foreach (var entry in module.ResourceTable.Entries)
+        {
+            length += entry.Data.Length;
+        }
 
+        il.Emit(OpCodes.Ldc_I4, length);
+        il.Emit(OpCodes.Conv_U);
+        il.EmitCall(OpCodes.Call, typeof(NativeMemory).GetMethod(nameof(NativeMemory.Alloc), new Type[] { typeof(nuint) }), null);
+        il.Emit(OpCodes.Stsfld, resources);
+
+        for (int i = 0; i < module.ResourceTable.EntryCount; i++)
+        {
+            var entry = module.ResourceTable.GetResource(i);
+            var offset = resourceOffsets[i];
+
+            var fld = moduleBuilder.DefineInitializedData("resource" + i, entry.Data, FieldAttributes.Static);
+
+            il.Emit(OpCodes.Ldsfld, resources);
+            il.Emit(OpCodes.Ldc_I4, offset);
+            il.Emit(OpCodes.Add);
+
+            il.Emit(OpCodes.Ldsflda, fld);
+            il.Emit(OpCodes.Ldc_I4, entry.Data.Length);
+            il.Emit(OpCodes.Cpblk);
+        }
+    }
+
+    private void EmitFreeResources(ILGenerator il)
+    {
+        il.Emit(OpCodes.Ldsfld, resources);
+        il.EmitCall(OpCodes.Call, typeof(NativeMemory).GetMethod(nameof(NativeMemory.Free)), null);
+        il.Emit(OpCodes.Ret);
     }
 }

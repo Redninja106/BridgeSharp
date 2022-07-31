@@ -4,16 +4,19 @@ namespace Bridge;
 
 public sealed class ResourceTable
 {
-    List<(ResourceKind, byte[])> resources = new();
+    internal List<ResourceTableEntry> entries = new();
 
-    internal ResourceTable(IEnumerable<(ResourceKind, byte[])> resources)
+    public int EntryCount => entries.Count;
+    public IEnumerable<ResourceTableEntry> Entries => entries;
+
+    internal ResourceTable(IEnumerable<ResourceTableEntry> resources)
     {
-        this.resources = new(resources);
+        this.entries = new(resources);
     }
 
     public ResourceKind GetKind(Index resource)
     {
-        return resources[resource].Item1;
+        return entries[resource].Kind;
     }
 
     public Index Find(string resource)
@@ -48,11 +51,11 @@ public sealed class ResourceTable
     public bool TryFind(Span<byte> bytes, out Index index)
     {
         index = default;
-        foreach (var (kind, value) in resources)
+        foreach (var value in entries)
         {
-            if (bytes.SequenceEqual(value))
+            if (bytes.SequenceEqual(value.Data))
             { 
-                index = resources.IndexOf((kind,value));
+                index = entries.IndexOf(value);
                 return true;
             } 
         }
@@ -60,16 +63,21 @@ public sealed class ResourceTable
         return false;
     }
     
-    public ReadOnlySpan<byte> GetResource(Index index)
+    public ResourceTableEntry GetResource(Index index)
     {
-        return GetResource(index, out _);
+        return entries[index];
     }
 
-    public ReadOnlySpan<byte> GetResource(Index index, out ResourceKind kind)
+    public ReadOnlySpan<byte> GetResourceBytes(Index index)
     {
-        byte[] result; 
-        (kind, result) = resources[index];
-        return result;
+        return GetResourceBytes(index, out _);
+    }
+
+    public ReadOnlySpan<byte> GetResourceBytes(Index index, out ResourceKind kind)
+    {
+        byte[] bytes;
+        (kind, bytes) = GetResource(index);
+        return bytes;
     }
 
     public string GetResourceString(Index index)
@@ -79,6 +87,6 @@ public sealed class ResourceTable
 
     public string GetResourceString(Index index, Encoding encoding)
     {
-        return encoding.GetString(GetResource(index));
+        return encoding.GetString(GetResourceBytes(index));
     }
 }

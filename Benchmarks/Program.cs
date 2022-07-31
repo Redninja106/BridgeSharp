@@ -20,14 +20,14 @@ public class B
     [BenchmarkDotNet.Attributes.GlobalSetup]
     public void Setup()
     {
-        var modBuilder = Module.Create();
+        var modBuilder = Module.CreateBuilder();
 
         var main = modBuilder.AddRoutine("main");
         var test = modBuilder.AddRoutine("test");
         test.AddParameter(DataType.I32);
 
         var maincode = main.GetCodeBuilder();
-        maincode.Emit(Push(TypedValue.Create(Count)));
+        maincode.Emit(PushConst(TypedValue.Create(Count)));
         maincode.Emit(Call(test));
         maincode.Emit(Return());
 
@@ -37,21 +37,21 @@ public class B
 
         var l0 = testcode.AddLocal(DataType.I32);
 
-        testcode.Emit(Push(TypedValue.Create(0)));
-        testcode.Emit(Pop(l0));
+        testcode.Emit(PushConst(TypedValue.Create(0)));
+        testcode.Emit(PopLocal(l0));
         testcode.Emit(Jump(loopcond));
 
         testcode.MoveLabel(loopbody);
-        testcode.Emit(Push(l0));
-        testcode.Emit(Push(TypedValue.Create(1)));
+        testcode.Emit(PushLocal(l0));
+        testcode.Emit(PushConst(TypedValue.Create(1)));
         testcode.Emit(Add(DataType.I32));
-        testcode.Emit(Pop(l0));
+        testcode.Emit(PopLocal(l0));
 
-        testcode.Emit(Push(l0));
+        testcode.Emit(PushLocal(l0));
         testcode.Emit(Print(DataType.I32));
 
         testcode.MoveLabel(loopcond);
-        testcode.Emit(Push(l0));
+        testcode.Emit(PushLocal(l0));
         testcode.Emit(PushArg(0));
         testcode.Emit(If(ComparisonKind.LessThan, DataType.I32));
         testcode.Emit(Jump(loopbody));

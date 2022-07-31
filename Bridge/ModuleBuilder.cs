@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace Bridge;
 
 public class ModuleBuilder
 {
+    public string Name { get; set; } = "module";
+    
     private readonly List<IBuilder> builders = new();
     private readonly List<Definition> definitions = new();
-    private readonly List<(ResourceKind, byte[])> resources = new();
+    private readonly List<ResourceTableEntry> resources = new();
 
     public RoutineBuilder AddRoutine(string name)
     {
@@ -59,7 +57,7 @@ public class ModuleBuilder
         var resource = new byte[bytes.Length];
         bytes.CopyTo(resource);
 
-        resources.Add((kind, resource));
+        resources.Add(new(kind, resource));
 
         return index;
     }
@@ -71,7 +69,7 @@ public class ModuleBuilder
             builders.First().Close();
         }
 
-        return new Module(definitions, resources);
+        return new Module(Name, definitions, resources);
     }
 
     internal void OnBuilderCompleted(IBuilder builder)

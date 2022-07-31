@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bridge.Text;
+﻿namespace Bridge.Text;
 internal static class Scanner
 {
     public static IEnumerable<Token> Scan(string source)

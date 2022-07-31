@@ -1,11 +1,7 @@
 ﻿using Bridge.Text;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Bridge.Verification;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Bridge;
 
@@ -13,15 +9,17 @@ public sealed class Module
 {
     private Definition[] definitions;
 
-    public ResourceTable Resources { get; }
+    public string Name { get; }
+    public ResourceTable ResourceTable { get; }
 
     public IEnumerable<Definition> Definitions => definitions;
     public IEnumerable<RoutineDefinition> Routines => definitions.OfType<RoutineDefinition>();
     public IEnumerable<ExternDefinition> Externs => definitions.OfType<ExternDefinition>();
 
-    internal Module(IEnumerable<Definition> declarations, IEnumerable<(ResourceKind, byte[])> resources)
+    internal Module(string name, IEnumerable<Definition> declarations, IEnumerable<ResourceTableEntry> resources)
     {
-        Resources = new(resources);
+        this.Name = name;
+        ResourceTable = new(resources);
         this.definitions = declarations.ToArray();
     }
 
@@ -30,7 +28,7 @@ public sealed class Module
         return definitions.Single(def => def.ID == id);
     }
 
-    public static ModuleBuilder Create()
+    public static ModuleBuilder CreateBuilder()
     {
         return new ModuleBuilder();
     }
@@ -69,5 +67,11 @@ public sealed class Module
         MethodInfo main = compiler.Compile(assemblyBuilder);
         assembly = assemblyBuilder;
         return main;
+    }
+
+    public static bool Verify(Module module, out VerificationMessage[] messages)
+    {
+        messages = Verifier.Verify(module);
+        return !messages.HasErrors();
     }
 }

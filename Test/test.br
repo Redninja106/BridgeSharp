@@ -1,11 +1,16 @@
-﻿extern i32 messagebox(*,*,*,u32);
+﻿
+extern i32 MessageBoxW(*,*,*,u32)
+{
+	library "user32"
+	winapi
+}
 
-define i32 main(i32 argc, *argv) {
+define main() {
     push* 0
 	push* "hello world\0"
 	push* "wassap\0"
 	push.i32 0
-    call messagebox
+    call MessageBoxW
 }
 
 define printstr(*)

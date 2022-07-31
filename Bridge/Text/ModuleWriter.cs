@@ -1,9 +1,4 @@
-﻿using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace Bridge.Text;
 
@@ -31,9 +26,43 @@ internal class ModuleWriter
             case RoutineDefinition routine:
                 WriteRoutine(writer, routine);
                 break;
+            case ExternDefinition ex:
+                WriteExtern(writer, ex);
+                break;
             default:
                 break;
         }
+    }
+    
+    private void WriteExtern(TextWriter writer, ExternDefinition definition)
+    {
+        writer.Write("extern ");
+
+        if (definition.ReturnType != DataType.Void)
+        {
+            WriteDataType(writer, definition.ReturnType, false);
+            writer.Write(" ");
+        }
+
+        writer.Write(definition.Name);
+
+        if (definition.Parameters.Any())
+        {
+            writer.Write("(");
+            WriteDataType(writer, definition.Parameters.First(), false);
+            foreach (var param in definition.Parameters.Skip(1))
+            {
+                writer.Write(",");
+                WriteDataType(writer, param, false);
+            }
+            writer.Write(")");
+        }
+
+        writer.WriteLine();
+        writer.WriteLine("{");
+        const string tab = "    ";
+        writer.WriteLine($"{tab}library \"{definition.Library}\"");
+        writer.WriteLine("}");
     }
 
     private void WriteRoutine(TextWriter writer, RoutineDefinition routine)
@@ -42,7 +71,7 @@ internal class ModuleWriter
 
         if (routine.ReturnType != DataType.Void)
         {
-            WriteDataType(writer, routine.ReturnType);
+            WriteDataType(writer, routine.ReturnType, false);
             writer.Write(" ");
         }
 
@@ -102,9 +131,10 @@ internal class ModuleWriter
                     WriteDataType(writer, castInstruction.Arg1);
                     WriteDataType(writer, castInstruction.Arg2);
                     break;
-                case Instruction<int> callInstruction:
+                case Instruction<CallMode, int> callInstruction:
+                    WriteModifier(writer, callInstruction);
                     writer.Write(" ");
-                    writer.Write(module.FindDefinition(callInstruction.Arg1).Name);
+                    writer.Write(module.FindDefinition(callInstruction.Arg2).Name);
                     break;
                 case Instruction<StackOpKind, byte> argInstruction:
                     WriteModifier(writer, argInstruction);
@@ -165,19 +195,18 @@ internal class ModuleWriter
                     break;
                 case Instruction<StackOpKind, DataType> typedInstruction:
                     WriteModifier(writer, typedInstruction);
-                    writer.Write(" ");
                     WriteDataType(writer, typedInstruction.Arg2);
                     break;
                 case Instruction<StackOpKind, Index> resourceInstruction:
                     WriteModifier(writer, resourceInstruction);
                     writer.Write(" ");
-                    switch (module.Resources.GetKind(resourceInstruction.Arg2))
+                    switch (module.ResourceTable.GetKind(resourceInstruction.Arg2))
                     {
                         case ResourceKind.String8:
-                            WriteString(writer, module.Resources.GetResourceString(resourceInstruction.Arg2, Encoding.UTF8));
+                            WriteString(writer, EscapeString(module.ResourceTable.GetResourceString(resourceInstruction.Arg2, Encoding.UTF8)));
                             break;
                         case ResourceKind.String16:
-                            WriteString(writer, module.Resources.GetResourceString(resourceInstruction.Arg2, Encoding.Unicode));
+                            WriteString(writer, EscapeString(module.ResourceTable.GetResourceString(resourceInstruction.Arg2, Encoding.Unicode)));
                             break;
                         case ResourceKind.Unknown:
                         default:
@@ -191,9 +220,7 @@ internal class ModuleWriter
                 case Instruction<ComparisonKind, DataType> conditionalInstruction:
                     writer.Write(".");
                     WriteComparison(writer, conditionalInstruction.Arg1);
-                    writer.Write(".");
-                    writer.Write(conditionalInstruction.Arg2.ToString().ToLower());
-
+                    WriteDataType(writer, conditionalInstruction.Arg2);
                     if (instruction.OpCode is OpCode.If)
                         currentTab = IfTab;
                     break;
@@ -211,7 +238,7 @@ internal class ModuleWriter
             writer.WriteLine();
         }
 
-    writer.WriteLine("}");
+        writer.WriteLine("}");
     }
 
     private static void WriteString(TextWriter writer, string value)
@@ -273,5 +300,15 @@ internal class ModuleWriter
             ComparisonKind.NotZero => "notzero",
             _ => throw new Exception()
         });
+    }
+
+    private string EscapeString(string s)
+    {
+        return s.Replace("\"", "\\\"")
+            .Replace("\\", "\\\\")
+            .Replace("\t", "\\t")
+            .Replace("\n", "\\n")
+            .Replace("\r", "\\r")
+            .Replace("\0", "\\0");
     }
 }

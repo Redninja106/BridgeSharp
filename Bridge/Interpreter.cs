@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
 
 namespace Bridge;
 public unsafe class Interpreter : IDisposable
@@ -149,32 +141,6 @@ public unsafe class Interpreter : IDisposable
             case Instruction<StackOpKind, Index> resourceInstruction:
                 Push(LoadResource(resourceInstruction.Arg2));
                 break;
-            case Instruction<StackOpKind> when instruction.OpCode is OpCode.Push:
-                switch (instruction.Arg1)
-                {
-                    case StackOpKind.Sp:
-                        Push(sp);
-                        break;
-                    case StackOpKind.Fp:
-                        Push(fp);
-                        break;
-                    default:
-                        throw new Exception();
-                }
-                break;
-            case Instruction<StackOpKind> when instruction.OpCode is OpCode.Pop:
-                switch (instruction.Arg1)
-                {
-                    case StackOpKind.Sp:
-                        sp = Pop<nuint>();
-                        break;
-                    case StackOpKind.Fp:
-                        fp = Pop<nuint>();
-                        break;
-                    default:
-                        throw new Exception();
-                }
-                break;
             default:
                 throw new Exception();
         }
@@ -187,7 +153,7 @@ public unsafe class Interpreter : IDisposable
             return loadedResource;
         }
 
-        var bytes = module.Resources.GetResource(index);
+        var bytes = module.ResourceTable.GetResourceBytes(index);
         
         var resource = NativeMemory.Alloc((nuint)bytes.Length);
         

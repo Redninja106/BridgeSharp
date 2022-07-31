@@ -1,11 +1,4 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bridge;
+﻿namespace Bridge;
 
 public record Instruction(OpCode OpCode)
 {
@@ -14,23 +7,22 @@ public record Instruction(OpCode OpCode)
     public static Instruction Return() => new Instruction(OpCode.Return);
     public static Instruction Call(DefinitionBuilder builder) => Call(builder.ID);
     public static Instruction Call(Definition definition) => Call(definition.ID);
-    public static Instruction Call(int definitionID) => new Instruction<int>(OpCode.Call, definitionID);
+    public static Instruction Call(int definitionID) => new Instruction<CallMode, int>(OpCode.Call, CallMode.Direct, definitionID);
+    public static Instruction CallIndirect(CallInfo info) => new Instruction<CallMode, CallInfo>(OpCode.Call, CallMode.Indirect, info);
     public static Instruction Jump(Label label) => new Instruction<Label>(OpCode.Jump, label);
     public static Instruction If(ComparisonKind comparison, DataType type) => new Instruction<ComparisonKind, DataType>(OpCode.If, comparison, type);
-    
-    public static Instruction Push(TypedValue value) => new Instruction<StackOpKind, TypedValue>(OpCode.Push, StackOpKind.Const, value);
-    public static Instruction Push(Local local) => new Instruction<StackOpKind, Local>(OpCode.Push, StackOpKind.Local, local);
+
+    public static Instruction PushConst<T>(T value) where T : unmanaged => PushConst(TypedValue.Create(value));
+    public static Instruction PushConst(TypedValue value) => new Instruction<StackOpKind, TypedValue>(OpCode.Push, StackOpKind.Const, value);
+    public static Instruction PushLocal(Local local) => new Instruction<StackOpKind, Local>(OpCode.Push, StackOpKind.Local, local);
     public static Instruction PushArg(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Push, StackOpKind.Arg, arg);
     public static Instruction Pop(DataType type) => new Instruction<StackOpKind, DataType>(OpCode.Pop, StackOpKind.Const, type);
-    public static Instruction Pop(Local local) => new Instruction<StackOpKind, Local>(OpCode.Pop, StackOpKind.Local, local);
+    public static Instruction PopLocal(Local local) => new Instruction<StackOpKind, Local>(OpCode.Pop, StackOpKind.Local, local);
     public static Instruction PopArg(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Pop, StackOpKind.Arg, arg);
-    public static Instruction PushAddress(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Push, StackOpKind.ArgAddress, arg);
-    public static Instruction PushAddress(Local local) => new Instruction<StackOpKind, Local>(OpCode.Push, StackOpKind.LocalAddress, local);
-    public static Instruction PushFramePointer() => new Instruction<StackOpKind>(OpCode.Push, StackOpKind.Fp);
-    public static Instruction PopFramePointer() => new Instruction<StackOpKind>(OpCode.Pop, StackOpKind.Fp);
-    public static Instruction PushStackPointer() => new Instruction<StackOpKind>(OpCode.Push, StackOpKind.Sp);
-    public static Instruction PopStackPointer() => new Instruction<StackOpKind>(OpCode.Pop, StackOpKind.Sp);
+    public static Instruction PushArgAddress(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Push, StackOpKind.ArgAddress, arg);
+    public static Instruction PushLocalAddress(Local local) => new Instruction<StackOpKind, Local>(OpCode.Push, StackOpKind.LocalAddress, local);
     public static Instruction PushResource(Index resourceIndex) => new Instruction<StackOpKind, Index>(OpCode.Push, StackOpKind.Resource, resourceIndex);
+    public static Instruction PushRoutine(int routineID) => new Instruction<StackOpKind, int>(OpCode.Push, StackOpKind.Routine, routineID);
 
     public static Instruction Load(DataType type) => new Instruction<DataType>(OpCode.Load, type);
     public static Instruction Store(DataType type) => new Instruction<DataType>(OpCode.Load, type);

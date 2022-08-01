@@ -272,7 +272,7 @@ public class CILCompiler
                 il.Emit(OpCodes.Not);
                 break;
             case OpCode.Compare when instruction is Instruction<ComparisonKind, DataType> compInstruction:
-                EmitCompare(il, compInstruction);
+                EmitCompare(il, compInstruction, false);
                 break;
             case OpCode.Print when instruction is Instruction<DataType> printInstruction:
                 Type type = printInstruction.Arg1 switch
@@ -355,7 +355,7 @@ public class CILCompiler
     {
         var falseCase = il.DefineLabel();
 
-        EmitCompare(il, ifInstruction);
+        EmitCompare(il, ifInstruction, true);
         il.Emit(OpCodes.Brfalse, falseCase);
 
         return falseCase;
@@ -366,10 +366,13 @@ public class CILCompiler
         il.MarkLabel(label);
     }
 
-    private void EmitCompare(ILGenerator il, Instruction<ComparisonKind, DataType> compareInstruction)
+    private void EmitCompare(ILGenerator il, Instruction<ComparisonKind, DataType> compareInstruction, bool invert)
     {
         bool unsigned = compareInstruction.Arg2 is DataType.U8 or DataType.U16 or DataType.U32 or DataType.U64 or DataType.F64 or DataType.F32;
-        var comparison = compareInstruction.Arg1;
+        var comparison =  compareInstruction.Arg1;
+
+        if (invert)
+            comparison = InvertComparison(comparison);
 
         switch (comparison)
         {
@@ -460,14 +463,14 @@ public class CILCompiler
         il.Emit(targetDataType switch
         {
             DataType.Pointer => OpCodes.Conv_U,
-            DataType.I64 => OpCodes.Conv_U8,
-            DataType.I32 => OpCodes.Conv_U4,
-            DataType.I16 => OpCodes.Conv_U2,
-            DataType.I8 => OpCodes.Conv_U1,
+            DataType.I64 => OpCodes.Conv_I8,
+            DataType.I32 => OpCodes.Conv_I4,
+            DataType.I16 => OpCodes.Conv_I2,
+            DataType.I8 =>  OpCodes.Conv_I1,
             DataType.U64 => OpCodes.Conv_U8,
             DataType.U32 => OpCodes.Conv_U4,
             DataType.U16 => OpCodes.Conv_U2,
-            DataType.U8 => OpCodes.Conv_U1,
+            DataType.U8 =>  OpCodes.Conv_U1,
             DataType.F64 => OpCodes.Conv_R8,
             DataType.F32 => OpCodes.Conv_R4,
             _ => throw new Exception()

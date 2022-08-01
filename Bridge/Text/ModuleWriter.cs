@@ -214,6 +214,11 @@ internal class ModuleWriter
                             break;
                     }
                     break;
+                case Instruction<StackOpKind, int> routineInstruction:
+                    WriteModifier(writer, routineInstruction);
+                    writer.Write(" ");
+                    writer.Write(module.FindDefinition(routineInstruction.Arg2).Name);
+                    break;
                 case Instruction<StackOpKind> stackInstruction:
                     writer.Write(stackInstruction.Arg1.ToString().ToLower());
                     break;

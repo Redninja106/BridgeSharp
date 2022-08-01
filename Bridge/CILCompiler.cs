@@ -294,6 +294,9 @@ public class CILCompiler
             case OpCode.PrintChar when instruction is Instruction<DataType> printCharInstruction:
                 il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("Write", new Type[] { typeof(char) }), null);
                 break;
+            case OpCode.ReadChar when instruction is Instruction<DataType> printCharInstruction:
+                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("Read"), null);
+                break;
             default:
                 break;
         }

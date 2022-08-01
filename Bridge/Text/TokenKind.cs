@@ -6,12 +6,14 @@ internal enum TokenKind
     Identifier,
     NumericLiteral,
     StringLiteral,
-
-    Define,
-
-    Comment,
+    DataType,
+    ExternKeyword,
+    RoutineKeyword,
+    InlineKeyword,
     OpenBracket,
     CloseBracket,
-    At,
-    Dot
+    OpenParen,
+    CloseParen,
+    Comma,
+    Dot,
 }

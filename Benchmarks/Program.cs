@@ -28,7 +28,7 @@ public class B
 
         var maincode = main.GetCodeBuilder();
         maincode.Emit(PushConst(TypedValue.Create(Count)));
-        maincode.Emit(Call(test));
+        maincode.Emit(CallDirect(test));
         maincode.Emit(Return());
 
         var testcode = test.GetCodeBuilder();

@@ -51,4 +51,5 @@ public enum OpCode : byte
     // prints the top value on the stack to the console
     Print,
     PrintChar,
+    ReadChar
 }

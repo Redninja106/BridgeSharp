@@ -5,9 +5,9 @@ public record Instruction(OpCode OpCode)
     public virtual int GetArgCount() => 0;
 
     public static Instruction Return() => new Instruction(OpCode.Return);
-    public static Instruction Call(DefinitionBuilder builder) => Call(builder.ID);
-    public static Instruction Call(Definition definition) => Call(definition.ID);
-    public static Instruction Call(int definitionID) => new Instruction<CallMode, int>(OpCode.Call, CallMode.Direct, definitionID);
+    public static Instruction CallDirect(DefinitionBuilder builder) => CallDirect(builder.ID);
+    public static Instruction CallDirect(Definition definition) => CallDirect(definition.ID);
+    public static Instruction CallDirect(int definitionID) => new Instruction<CallMode, int>(OpCode.Call, CallMode.Direct, definitionID);
     public static Instruction CallIndirect(CallInfo info) => new Instruction<CallMode, CallInfo>(OpCode.Call, CallMode.Indirect, info);
     public static Instruction Jump(Label label) => new Instruction<Label>(OpCode.Jump, label);
     public static Instruction If(ComparisonKind comparison, DataType type) => new Instruction<ComparisonKind, DataType>(OpCode.If, comparison, type);
@@ -45,6 +45,7 @@ public record Instruction(OpCode OpCode)
 
     public static Instruction Print(DataType type) => new Instruction<DataType>(OpCode.Print, type);
     public static Instruction PrintChar(DataType type) => new Instruction<DataType>(OpCode.PrintChar, type);
+    public static Instruction ReadChar(DataType type) => new Instruction<DataType>(OpCode.ReadChar, type);
     public static Instruction Compare(ComparisonKind kind, DataType type) => new Instruction<ComparisonKind, DataType>(OpCode.Compare, kind, type);
 }
 

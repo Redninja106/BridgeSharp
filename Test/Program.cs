@@ -8,22 +8,57 @@ using System.Text;
 using static Bridge.Instruction;
 using Module = Bridge.Module;
 
-var mod = Test();
+
+//var mod = Module.Parse("test5.br");
+
+//Module.Dump(mod, Console.Out);
+//Module.Verify(mod, out var messages);
+//messages.PrintToConsole();
+
+const bool compiled = true;
+var mod = ReadCharTest();
+
 Module.Dump(mod, Console.Out);
 
 if (Module.Verify(mod, out var messages))
 {
     messages.PrintToConsole();
-    var entry = Module.Compile(mod, out var assembly);
-    entry.Invoke(null, null);
-
-    CILCompiler.DumpModuleIL(Console.Out, mod, entry);
+    if (compiled)
+    {
+        var entry = Module.Compile(mod, out var assembly);
+        entry.Invoke(null, null);
+        
+        CILCompiler.DumpModuleIL(Console.Out, mod, entry);
+    }
+    else
+    {
+        var i = new Interpreter();
+        i.Run(mod);
+    }
 }
 else
 {
     messages.PrintToConsole();
 }
-//var modBuilder = Module.Create();
+
+Module ReadCharTest()
+{
+    var builder = Module.CreateBuilder();
+
+    var main = builder.AddRoutine("main");
+
+    var mc = main.GetCodeBuilder();
+    var start = mc.AddLabel();
+
+    mc.Emit(ReadChar(DataType.I8));
+    mc.Emit(PrintChar(DataType.I8));
+
+    mc.Emit(Jump(start));
+
+    return builder.CreateModule();
+}
+
+// var modBuilder = Module.Create();
 
 ////var main = modBuilder.AddRoutine("main");
 ////var mc = main.GetCodeBuilder();
@@ -178,7 +213,7 @@ Module Test()
     var mainc = main.GetCodeBuilder();
     mainc.Emit(PushConst(32));
     mainc.Emit(PushConst(3));
-    mainc.Emit(Call(pow));
+    mainc.Emit(CallDirect(pow));
     mainc.Emit(Print(DataType.I32));
     mainc.Emit(Return());
 
@@ -197,7 +232,7 @@ Module Test()
     powc.Emit(PushArg(1));
     powc.Emit(PushConst(1));
     powc.Emit(Subtract(DataType.I32));
-    powc.Emit(Call(pow));
+    powc.Emit(CallDirect(pow));
     powc.Emit(Multiply(DataType.I32));
     powc.Emit(Return());
     powc.Emit(Jump(inst17));
@@ -284,17 +319,17 @@ Module MallocTest()
     c.Emit(Jump(failure));
 
     c.Emit(PushLocal(ptr));
-    c.Emit(Call(free));
+    c.Emit(CallDirect(free));
 
     c.Emit(PushResource(successMessage));
-    c.Emit(Call(printstr));
+    c.Emit(CallDirect(printstr));
 
     c.Emit(Jump(end));
 
     c.MoveLabel(failure);
 
     c.Emit(PushResource(failureMessage));
-    c.Emit(Call(printstr));
+    c.Emit(CallDirect(printstr));
 
     c.MoveLabel(end);
     c.Emit(Return());

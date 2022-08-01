@@ -35,18 +35,28 @@ public sealed class Module
 
     public static Module Load(string path) => throw new NotImplementedException();
     public static Module Load(Stream stream) => throw new NotImplementedException();
-    public static Module Parse(string file)
+    public static Module Parse(string file) => Parse(file, out _);
+    public static Module Parse(string file, out string[] errors)
     {
         using var fs = File.OpenRead(file);
         using var reader = new StreamReader(fs);
-        return Parse(reader);
+        return Parse(reader, out errors);
     }
-    public static Module Parse(TextReader reader)
+    public static Module Parse(TextReader reader) => Parse(reader, out _);
+    public static Module Parse(TextReader reader, out string[] errors)
     {
-        return null;
-        // var parser = new Text.Parser();
-        // parser.AddSource(reader.ReadToEnd());
-        // return parser.CreateModule();
+        var builder = CreateBuilder();
+
+        var parser = new Parser(builder);
+        if (parser.TryParse(reader.ReadToEnd(), out Document document, out errors))
+        {
+            document.Build(builder);
+            return builder.CreateModule();
+        }
+        else
+        {
+            return null;
+        }
     }
     public static Module Link(params Module[] modules) => throw new NotImplementedException();
     public static void Save(Module module, string path) => throw new NotImplementedException();

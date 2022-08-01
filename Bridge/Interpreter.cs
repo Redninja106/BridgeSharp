@@ -250,6 +250,14 @@ public unsafe class Interpreter : IDisposable
                 TypedValue value = Pop(type);
                 Console.Write((char)ToDynamic(value));
                 break;
+            case OpCode.ReadChar:
+                type = instruction.Arg1;
+
+                if (type is DataType.F32 or DataType.F64)
+                    throw new Exception();
+
+                Push(Cast(TypedValue.Create(Console.Read()), type));
+                break;
             case OpCode.Increment:
                 var operand = Pop(instruction.Arg1);
                 Push(UnaryOp(operand, x => x + 1));

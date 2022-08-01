@@ -6,6 +6,7 @@ public abstract class DefinitionBuilder : IBuilder
     public string Name { get; }
     public int ID { get; }
 
+    public ModuleBuilder ModuleBuilder => parent;
     public bool Closed { get; private set; }
     
 

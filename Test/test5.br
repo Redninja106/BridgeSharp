@@ -1,0 +1,7 @@
+﻿routine main()
+{
+	push.const.i32 60
+	push.const.i32 9
+	add.i32
+	print.i32
+}

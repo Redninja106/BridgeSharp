@@ -2,6 +2,7 @@
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Mono.Reflection;
 using CIL = System.Reflection.Emit;
 using CILModuleBuilder = System.Reflection.Emit.ModuleBuilder;
 using NativeCallingConvention = System.Runtime.InteropServices.CallingConvention;
@@ -11,22 +12,51 @@ namespace Bridge;
 /// <summary>
 /// Experimental bridge to .NET cil compiler
 /// </summary>
-internal class CILCompiler
+public class CILCompiler
 {
     private readonly Module module;
     private readonly List<(Definition Definition, MethodBuilder Method)> methodBuilders = new();
     private Stack<CIL.Label> ifs = new();
     private FieldInfo resources;
     private int[] resourceOffsets;
-    
-    public CILCompiler(Module module)
+
+    public static void DumpModuleIL(TextWriter writer, Module module, MethodInfo entryPoint)
+    {
+        if (entryPoint.Name is not "__entrypoint")
+            throw new Exception();
+
+        var type = entryPoint.DeclaringType;
+
+        foreach (var routine in module.Routines)
+        {
+            var method = type.GetMethod(routine.Name);
+
+            if (method is null)
+                return;
+            
+            var instructions = method.GetInstructions();
+
+            writer.WriteLine($"emitted code for routine '{routine.Name}'");
+
+            writer.WriteLine("{");
+
+            foreach (var instruction in instructions)
+            {
+                writer.WriteLine("    " + instruction.ToString());
+            }
+
+            writer.WriteLine("}");
+        }
+    }
+
+    internal CILCompiler(Module module)
     {
         this.module = module;
     }
 
-    public MethodInfo Compile(AssemblyBuilder builder)
+    internal MethodInfo Compile(AssemblyBuilder builder)
     {
-        var moduleBuilder = builder.DefineDynamicModule("smodule");
+        var moduleBuilder = builder.DefineDynamicModule("module");
         var typeBuilder = moduleBuilder.DefineType("__Program");
         
         var entrypoint = typeBuilder.DefineMethod("__entrypoint", MethodAttributes.Static | MethodAttributes.Public);

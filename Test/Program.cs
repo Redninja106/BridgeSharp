@@ -1,5 +1,6 @@
 ﻿using Bridge;
 using Bridge.Verification;
+using Mono.Reflection;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -13,17 +14,10 @@ Module.Dump(mod, Console.Out);
 if (Module.Verify(mod, out var messages))
 {
     messages.PrintToConsole();
-    var entry = Module.Compile(mod);
+    var entry = Module.Compile(mod, out var assembly);
     entry.Invoke(null, null);
 
-    foreach (var member in entry.DeclaringType.GetMembers())
-    {
-        if (member is MethodInfo method)
-        {
-            var body = method.GetMethodBody();
-            body.GetILAsByteArray();
-        }
-    }
+    CILCompiler.DumpModuleIL(Console.Out, mod, entry);
 }
 else
 {

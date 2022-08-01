@@ -32,6 +32,7 @@ public sealed class Module
     {
         return new ModuleBuilder();
     }
+
     public static Module Load(string path) => throw new NotImplementedException();
     public static Module Load(Stream stream) => throw new NotImplementedException();
     public static Module Parse(string file)

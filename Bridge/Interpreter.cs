@@ -58,6 +58,9 @@ public unsafe class Interpreter : IDisposable
             case Instruction<int> ptrInstruction:
                 EvalPtrInstruction(ptrInstruction);
                 break;
+            case Instruction<CallMode> callInstruction:
+                EvalCallInstruction(callInstruction);
+                break;
             case Instruction<DataType> typedInstruction:
                 EvalTypedInstruction(typedInstruction);
                 break;
@@ -72,6 +75,21 @@ public unsafe class Interpreter : IDisposable
                 break;
             default:
                 break;
+        }
+    }
+
+    private void EvalCallInstruction(Instruction<CallMode> instruction)
+    {
+        switch (instruction.Arg1)
+        {
+            case CallMode.Direct when instruction is Instruction<CallMode, int> directCallInstruction:
+                Call(directCallInstruction.Arg2);
+                break;
+            case CallMode.Indirect:
+            case CallMode.Tail:
+            case CallMode.TailIndirect:
+            default:
+                throw new NotImplementedException();
         }
     }
 
@@ -99,9 +117,6 @@ public unsafe class Interpreter : IDisposable
         {
             case OpCode.Jump:
                 ip = instruction.Arg1;
-                break;
-            case OpCode.Call:
-                Call(instruction.Arg1);
                 break;
             default:
                 break;

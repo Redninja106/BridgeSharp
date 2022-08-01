@@ -3,9 +3,18 @@ using System.Runtime.InteropServices;
 
 namespace Bridge;
 
+/// <summary>
+/// Represents a type-value pair, with utilities for reading a proper value.
+/// </summary>
+/// <param name="Bits">The raw data of the value, 0-padded to 64 bits.</param>
+/// <param name="Type">The type of the value.</param>
 [StructLayout(LayoutKind.Sequential)]
 public readonly record struct TypedValue(ulong Bits, DataType Type)
 {
+    /// <summary>
+    /// Returns the size of the value in bytes.
+    /// This property does not return the size of <see cref="TypedValue"/>.
+    /// </summary>
     public int Size => GetDataTypeSize(Type);
 
     public unsafe readonly Span<byte> GetBytes()
@@ -14,51 +23,86 @@ public readonly record struct TypedValue(ulong Bits, DataType Type)
         return new Span<byte>(ptr, Size);
     }
     
-    public readonly T As<T>()
+    /// <summary>
+    /// Interprets this value's raw bytes as the provided primitive.
+    /// </summary>
+    public readonly T As<T>() where T : unmanaged
     {
         ulong bits = Bits;
         return Unsafe.As<ulong, T>(ref bits);
     }
 
-    public readonly bool Is<T>()
+    /// <summary>
+    /// Returns <see langword="true"/> if this object's type matches the provided primitive, otherwise <see langword="false"/>.
+    /// </summary>
+    public readonly bool Is<T>() where T : unmanaged
     {
-        return GetDataType<T>() is not DataType.Void;
+        return GetDataType<T>() == this.Type;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="TypedValue"/> from the provided primitive.
+    /// <para>
+    /// Valid primitives are:
+    /// <see langword="long"/>,
+    /// <see langword="int"/>,
+    /// <see langword="short"/>,
+    /// <see langword="sbyte"/>,
+    /// <see langword="ulong"/>,
+    /// <see langword="uint"/>,
+    /// <see langword="ushort"/>,
+    /// <see langword="byte"/>,
+    /// <see langword="double"/>,
+    /// <see langword="float"/>,
+    /// and <see langword="nuint"/>
+    /// </para>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="value"></param>
+    /// <returns></returns>
     public static TypedValue Create<T>(T value) where T : unmanaged
     {
+        if (GetDataType<T>() is DataType.Void)
+        {
+            throw new ArgumentException("Invalid Primitive!");
+        }
+
         ulong bits = 0;
         var size = Unsafe.SizeOf<T>();
         Unsafe.CopyBlock(ref Unsafe.As<ulong, byte>(ref bits), ref Unsafe.As<T, byte>(ref value), (uint)size);
         return new(bits, GetDataType<T>());
     }
-    
-    public static TypedValue CreateDefault<T>() where T : unmanaged
-    {
-        return Create<T>(default);
-    }
 
+    /// <summary>
+    /// Creates a new <see cref="TypedValue"/> with the default value of the provided type.
+    /// </summary>
+    /// <param name="dataType"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public static TypedValue CreateDefault(DataType dataType)
     {
-        switch (dataType)
+        return dataType switch
         {
-            case DataType.I64:      return CreateDefault<long>();
-            case DataType.I32:      return CreateDefault<int>();
-            case DataType.I16:      return CreateDefault<short>();
-            case DataType.I8:       return CreateDefault<sbyte>();
-            case DataType.U64:      return CreateDefault<ulong>();
-            case DataType.U32:      return CreateDefault<uint>();
-            case DataType.U16:      return CreateDefault<ushort>();
-            case DataType.U8:       return CreateDefault<byte>();
-            case DataType.F64:      return CreateDefault<double>();
-            case DataType.F32:      return CreateDefault<float>();
-            case DataType.Pointer:  return CreateDefault<nuint>();
-            case DataType.Void:     return CreateDefault<ulong>();
-            default: throw new Exception();
-        }
+            DataType.I64 => Create<long>(default),
+            DataType.I32 => Create<int>(default),
+            DataType.I16 => Create<short>(default),
+            DataType.I8 => Create<sbyte>(default),
+            DataType.U64 => Create<ulong>(default),
+            DataType.U32 => Create<uint>(default),
+            DataType.U16 => Create<ushort>(default),
+            DataType.U8 => Create<byte>(default),
+            DataType.F64 => Create<double>(default),
+            DataType.F32 => Create<float>(default),
+            DataType.Pointer => Create<nuint>(default),
+            DataType.Void => Create<ulong>(default),
+            _ => throw new ArgumentException("Invalid DataType!", nameof(dataType)),
+        };
     }
 
-    public static DataType GetDataType<T>()
+    /// <summary>
+    /// Returns the dataType which most closely matches the given .NET primitive, or <see cref="DataType.Void"/> if no match is found.
+    /// </summary>
+    public static DataType GetDataType<T>() where T : unmanaged
     {
         return default(T) switch
         {
@@ -76,12 +120,10 @@ public readonly record struct TypedValue(ulong Bits, DataType Type)
             _ => DataType.Void,
         };
     }
-    
-    public static int GetDataTypeSize<T>()
-    {
-        return GetDataTypeSize(GetDataType<T>());
-    }
 
+    /// <summary>
+    /// Returns the size of a value of the given data type, or 0 if the type is invalid or <see cref="DataType.Void"/>.
+    /// </summary>
     public static int GetDataTypeSize(DataType type)
     {
         return type switch
@@ -91,10 +133,13 @@ public readonly record struct TypedValue(ulong Bits, DataType Type)
             DataType.I16 or DataType.U16 => 2,
             DataType.I8 or DataType.U8 => 1,
             DataType.Pointer => Unsafe.SizeOf<nuint>(),
-            _ => throw new Exception(),
+            _ => 0
         };
     }
 
+    /// <summary>
+    /// Returns the type of the .NET primitive which most closely matches the given data type, or null if no match is found or the type is <see cref="DataType.Void"/>.
+    /// </summary>
     public static Type GetDataTypePrimitive(DataType type)
     {
         return type switch
@@ -110,7 +155,7 @@ public readonly record struct TypedValue(ulong Bits, DataType Type)
             DataType.F64 => typeof(double),
             DataType.F32 => typeof(float),
             DataType.Pointer => typeof(nuint),
-            _ => throw new Exception(),
+            _ => null
         };
     }
 

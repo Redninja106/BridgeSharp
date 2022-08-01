@@ -1,10 +1,34 @@
 ﻿using Bridge;
 using Bridge.Verification;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using static Bridge.Instruction;
+using Module = Bridge.Module;
 
+var mod = Test();
+Module.Dump(mod, Console.Out);
+
+if (Module.Verify(mod, out var messages))
+{
+    messages.PrintToConsole();
+    var entry = Module.Compile(mod);
+    entry.Invoke(null, null);
+
+    foreach (var member in entry.DeclaringType.GetMembers())
+    {
+        if (member is MethodInfo method)
+        {
+            var body = method.GetMethodBody();
+            body.GetILAsByteArray();
+        }
+    }
+}
+else
+{
+    messages.PrintToConsole();
+}
 //var modBuilder = Module.Create();
 
 ////var main = modBuilder.AddRoutine("main");
@@ -39,111 +63,6 @@ using static Bridge.Instruction;
 // using var i = new Interpreter();
 // i.Run(mod);
 
-var modBuilder = Module.CreateBuilder();
-
-var printstr = modBuilder.AddRoutine("printstr");
-
-var malloc = modBuilder.AddExtern("malloc");
-malloc.Library = "ucrtbase.dll";
-malloc.CallingConvention = Bridge.CallingConvention.Cdecl;
-malloc.ReturnType = DataType.Pointer;
-malloc.AddParameter(DataType.Pointer);
-
-
-var free = modBuilder.AddExtern("free");
-free.Library = "ucrtbase.dll";
-free.CallingConvention = Bridge.CallingConvention.Cdecl;
-free.ReturnType = DataType.Void;
-free.AddParameter(DataType.Pointer);
-
-var messagebox = modBuilder.AddExtern("MessageBoxA");
-messagebox.Library = "user32";
-messagebox.CallingConvention = Bridge.CallingConvention.StdCall;
-messagebox.ReturnType = DataType.I32;
-messagebox.AddParameter(DataType.Pointer);
-messagebox.AddParameter(DataType.Pointer);
-messagebox.AddParameter(DataType.Pointer);
-messagebox.AddParameter(DataType.U32);
-
-var failureMessage = modBuilder.AddResource("malloc failed!\0", Encoding.Unicode);
-var successMessage = modBuilder.AddResource("malloc'ed and freed 16 bytes!\0", Encoding.Unicode);
-
-var main = modBuilder.AddRoutine("main");
-var c = main.GetCodeBuilder();
-
-var end = c.AddLabel();
-var failure = c.AddLabel();
-
-var ptr = c.AddLocal(DataType.Pointer);
-
-c.Emit(PushConst<nuint>(16));
-c.Emit(PushRoutine(malloc.ID));
-c.Emit(CallIndirect(new(malloc.ReturnType, malloc.Parameters.ToArray(), Bridge.CallingConvention.Cdecl)));
-c.Emit(PopLocal(ptr));
-
-c.Emit(PushLocal(ptr));
-c.Emit(Cast(DataType.Pointer, DataType.U64));
-c.Emit(Print(DataType.Pointer));
-
-c.Emit(PushLocal(ptr));
-c.Emit(If(ComparisonKind.Zero, DataType.Pointer));
-c.Emit(Jump(failure));
-
-c.Emit(PushLocal(ptr));
-c.Emit(Call(free));
-
-c.Emit(PushResource(successMessage));
-c.Emit(Call(printstr));
-
-c.Emit(Jump(end));
-
-c.MoveLabel(failure);
-
-c.Emit(PushResource(failureMessage));
-c.Emit(Call(printstr));
-
-c.MoveLabel(end);
-c.Emit(Return());
-
-printstr.AddParameter(DataType.Pointer);
-var pscode = printstr.GetCodeBuilder();
-var start = pscode.AddLabel();
-pscode.Emit(PushArg(0));
-pscode.Emit(Load(DataType.U16));
-
-pscode.Emit(If(ComparisonKind.Zero, DataType.U16));
-pscode.Emit(Return());
-
-pscode.Emit(PushArg(0));
-pscode.Emit(Load(DataType.U16));
-pscode.Emit(PrintChar(DataType.U16));
-
-pscode.Emit(PushArg(0));
-pscode.Emit(PushConst<nuint>(2));
-pscode.Emit(Add(DataType.Pointer));
-pscode.Emit(PopArg(0));
-
-pscode.Emit(Jump(start));
-
-var mod = modBuilder.CreateModule();
-Module.Dump(mod, Console.Out);
-
-if (Module.Verify(mod, out var messages))
-{
-    messages.PrintToConsole();
-    var entry = Module.Compile(mod);
-    entry.Invoke(null, null);
-}
-else
-{
-    messages.PrintToConsole();
-}
-
-void GASIDOASasd()
-{
-    nuint d = 0;
-    Console.WriteLine(d.ToString("x"));
-}
 
 //static class E
 //{
@@ -252,3 +171,172 @@ loopcond:
 
 
 //pscode.Emit(Return());
+
+Module Test()
+{
+    var builder = Module.CreateBuilder();
+    var main = builder.AddRoutine("main");
+    var pow = builder.AddRoutine("pow");
+    pow.ReturnType = DataType.I32;
+    pow.AddParameter(DataType.I32);
+    pow.AddParameter(DataType.I32);
+
+    var mainc = main.GetCodeBuilder();
+    mainc.Emit(PushConst(32));
+    mainc.Emit(PushConst(3));
+    mainc.Emit(Call(pow));
+    mainc.Emit(Print(DataType.I32));
+    mainc.Emit(Return());
+
+    var powc = pow.GetCodeBuilder();
+    var inst15 = powc.AddLabel();
+    var inst17 = powc.AddLabel();
+
+    powc.Emit(PushArg(1));
+    powc.Emit(PushConst(1));
+    powc.Emit(Compare(ComparisonKind.Equal, DataType.I32));
+    powc.Emit(Cast(DataType.I8, DataType.I32));
+    powc.Emit(If(ComparisonKind.NotZero, DataType.I32));
+    powc.Emit(Jump(inst15));
+    powc.Emit(PushArg(0));
+    powc.Emit(PushArg(0));
+    powc.Emit(PushArg(1));
+    powc.Emit(PushConst(1));
+    powc.Emit(Subtract(DataType.I32));
+    powc.Emit(Call(pow));
+    powc.Emit(Multiply(DataType.I32));
+    powc.Emit(Return());
+    powc.Emit(Jump(inst17));
+
+    powc.MoveLabel(inst15);
+    powc.Emit(PushArg(0));
+    powc.Emit(Return());
+
+    powc.MoveLabel(inst17);
+    powc.Emit(Pop(DataType.I32));
+    powc.Emit(Return());
+
+    var mod = builder.CreateModule();
+
+    Module.Dump(mod, Console.Out);
+
+    if (Module.Verify(mod, out var messages))
+    {
+        messages.PrintToConsole();
+        var i = new Interpreter();
+        i.Run(mod);
+        
+        //var entry = Module.Compile(mod);
+        //entry.Invoke(null, null);
+    }
+    else
+    {
+        messages.PrintToConsole();
+    }
+
+    return mod;
+}
+
+Module MallocTest()
+{
+    var modBuilder = Module.CreateBuilder();
+
+    var printstr = modBuilder.AddRoutine("printstr");
+
+    var malloc = modBuilder.AddExtern("malloc");
+    malloc.Library = "ucrtbase.dll";
+    malloc.CallingConvention = Bridge.CallingConvention.Cdecl;
+    malloc.ReturnType = DataType.Pointer;
+    malloc.AddParameter(DataType.Pointer);
+
+
+    var free = modBuilder.AddExtern("free");
+    free.Library = "ucrtbase.dll";
+    free.CallingConvention = Bridge.CallingConvention.Cdecl;
+    free.ReturnType = DataType.Void;
+    free.AddParameter(DataType.Pointer);
+
+    var messagebox = modBuilder.AddExtern("MessageBoxA");
+    messagebox.Library = "user32";
+    messagebox.CallingConvention = Bridge.CallingConvention.StdCall;
+    messagebox.ReturnType = DataType.I32;
+    messagebox.AddParameter(DataType.Pointer);
+    messagebox.AddParameter(DataType.Pointer);
+    messagebox.AddParameter(DataType.Pointer);
+    messagebox.AddParameter(DataType.U32);
+
+    var failureMessage = modBuilder.AddResource("malloc failed!\0", Encoding.Unicode);
+    var successMessage = modBuilder.AddResource("malloc'ed and freed 16 bytes!\0", Encoding.Unicode);
+
+    var main = modBuilder.AddRoutine("main");
+    var c = main.GetCodeBuilder();
+
+    var end = c.AddLabel();
+    var failure = c.AddLabel();
+
+    var ptr = c.AddLocal(DataType.Pointer);
+
+    c.Emit(PushConst<nuint>(16));
+    c.Emit(PushRoutine(malloc.ID));
+    c.Emit(CallIndirect(new(malloc.ReturnType, malloc.Parameters.ToArray(), Bridge.CallingConvention.Cdecl)));
+    c.Emit(PopLocal(ptr));
+
+    c.Emit(PushLocal(ptr));
+    c.Emit(Cast(DataType.Pointer, DataType.U64));
+    c.Emit(Print(DataType.Pointer));
+
+    c.Emit(PushLocal(ptr));
+    c.Emit(If(ComparisonKind.Zero, DataType.Pointer));
+    c.Emit(Jump(failure));
+
+    c.Emit(PushLocal(ptr));
+    c.Emit(Call(free));
+
+    c.Emit(PushResource(successMessage));
+    c.Emit(Call(printstr));
+
+    c.Emit(Jump(end));
+
+    c.MoveLabel(failure);
+
+    c.Emit(PushResource(failureMessage));
+    c.Emit(Call(printstr));
+
+    c.MoveLabel(end);
+    c.Emit(Return());
+
+    printstr.AddParameter(DataType.Pointer);
+    var pscode = printstr.GetCodeBuilder();
+    var start = pscode.AddLabel();
+    pscode.Emit(PushArg(0));
+    pscode.Emit(Load(DataType.U16));
+
+    pscode.Emit(If(ComparisonKind.Zero, DataType.U16));
+    pscode.Emit(Return());
+
+    pscode.Emit(PushArg(0));
+    pscode.Emit(Load(DataType.U16));
+    pscode.Emit(PrintChar(DataType.U16));
+
+    pscode.Emit(PushArg(0));
+    pscode.Emit(PushConst<nuint>(2));
+    pscode.Emit(Add(DataType.Pointer));
+    pscode.Emit(PopArg(0));
+
+    pscode.Emit(Jump(start));
+
+    return modBuilder.CreateModule();
+}
+
+void main()
+{
+    Console.WriteLine(pow(53,3));
+}
+
+int pow(int x, int y)
+{
+    if (y == 1)
+        return x;
+    else
+        return x * pow(x, y - 1);
+}

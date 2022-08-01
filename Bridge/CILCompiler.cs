@@ -335,9 +335,11 @@ public class CILCompiler
                 {
                     il.EmitCalli(OpCodes.Call, CallingConventions.Standard, ret, parameters, null);
                 }
-
-                var conv = ConvertCallingConvention(indirectCallInstruction.Arg2.CallingConvention);
-                il.EmitCalli(OpCodes.Calli, conv, ret, parameters);
+                else
+                {
+                    var conv = ConvertCallingConvention(indirectCallInstruction.Arg2.CallingConvention);
+                    il.EmitCalli(OpCodes.Calli, conv, ret, parameters);
+                }
                 break;
             default:
                 throw new Exception();

@@ -1,7 +1,7 @@
 ﻿namespace Bridge;
 public enum ResourceKind : byte
 {
-    Unknown,
+    Bytes,
     String8,
     String16,
 }

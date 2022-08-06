@@ -211,7 +211,7 @@ internal class ModuleWriter
                         case ResourceKind.String16:
                             WriteString(writer, EscapeString(module.ResourceTable.GetResourceString(resourceInstruction.Arg2, Encoding.Unicode)));
                             break;
-                        case ResourceKind.Unknown:
+                        case ResourceKind.Bytes:
                         default:
                             writer.Write(resourceInstruction.Arg2);
                             break;

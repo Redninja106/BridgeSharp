@@ -1,0 +1,72 @@
+﻿// maybe sp, fp keywords 
+
+define i32 add.i32.i32
+define add.i32.i32.i32
+define i32 add(i32 a, i32 b)
+define add(a: i32, i32: b) : i32
+{
+label:
+	local.i32 x // define a local (not used here)
+	push.arg 0 // or a
+	push.arg 1 // or b
+	push fp
+	add
+	if.zero jump label
+	ret
+}
+
+
+// multiply-add combo instruction
+inline mad
+{
+	mul
+	add
+}
+
+extern i32 MessageBox(*,*,*,u32); 
+
+/* ptrs:
+ * & is addressof, can only be pushed
+ * @ dereferences, can be pushed or popped
+ * three use cases:
+ * putting & after a .local or .arg on a push instruction modifies it to push the address of that arg/local instead of its value
+ * putting @ after a .local or .arg on a push instruction modifies it to push the value pointed to by that arg/local instead of its value
+ * putting @ after a .local or .arg on a pop instruction modifies it to pop into the location pointed to by that arg/local instead of itself
+ * example:
+ */
+
+
+loada.arg 0
+loada.local 0
+
+load.i32
+store.i32
+ 
+
+
+//
+// if true then 1 else 0
+//
+//
+//
+//
+routine adias0pdkas(*,i32,f32,i8,*)
+{
+	push.const* 0x100000
+	load.i32
+
+	push.const* 0x100000
+	push.const.push 69
+	store.i32
+	
+
+
+	if.notzero.i32 jump true
+false:
+	// false stuff
+	jump end
+true:
+	// true stuff
+end:
+
+}

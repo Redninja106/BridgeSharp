@@ -1,0 +1,35 @@
+﻿
+extern i32 MessageBoxW(*,*,*,u32)
+{
+	library "user32"
+	winapi
+}
+
+define main() {
+    push* 0
+	push* "hello world\0"
+	push* "wassap\0"
+	push.i32 0
+    call MessageBoxW
+}
+
+define printstr(*)
+{
+start:
+	push.arg 0
+	load.u8
+	
+	if.zero.u8
+		return
+
+	push.arg 0
+	load.u8
+	printchar.u8
+	
+	push.arg 0
+	push.const* 1
+	add*
+	pop.arg 0
+	
+	jump start
+}

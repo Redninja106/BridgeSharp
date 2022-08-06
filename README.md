@@ -29,7 +29,7 @@ ModuleBuilder module = Module.CreateBuilder();
 
 // Create a main routine
 RoutineBuilder main = module.AddRoutine("main");
-main.ReturnType = DataType.Void;
+main.SetReturn(DataType.Void);
 
 // Create a code section
 CodeBuilder code = main.GetCodeBuilder();

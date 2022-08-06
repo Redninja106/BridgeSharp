@@ -211,8 +211,8 @@ Module Test()
     pow.AddParameter(DataType.I32);
 
     var mainc = main.GetCodeBuilder();
-    mainc.Emit(PushConst(32));
-    mainc.Emit(PushConst(3));
+    mainc.Emit(Push(32));
+    mainc.Emit(Push(3));
     mainc.Emit(CallDirect(pow));
     mainc.Emit(Print(DataType.I32));
     mainc.Emit(Return());
@@ -221,16 +221,16 @@ Module Test()
     var inst15 = powc.AddLabel();
     var inst17 = powc.AddLabel();
 
-    powc.Emit(PushArg(new(1)));
-    powc.Emit(PushConst(1));
+    powc.Emit(Push((Argument)(new(1))));
+    powc.Emit(Push(1));
     powc.Emit(Compare(ComparisonKind.Equal, DataType.I32));
     powc.Emit(Cast(DataType.I8, DataType.I32));
     powc.Emit(If(ComparisonKind.NotZero, DataType.I32));
     powc.Emit(Jump(inst15));
-    powc.Emit(PushArg(new(0)));
-    powc.Emit(PushArg(new(0)));
-    powc.Emit(PushArg(new(1)));
-    powc.Emit(PushConst(1));
+    powc.Emit(Push((Argument)(new(0))));
+    powc.Emit(Push((Argument)(new(0))));
+    powc.Emit(Push((Argument)(new(1))));
+    powc.Emit(Push(1));
     powc.Emit(Subtract(DataType.I32));
     powc.Emit(CallDirect(pow));
     powc.Emit(Multiply(DataType.I32));
@@ -238,7 +238,7 @@ Module Test()
     powc.Emit(Jump(inst17));
 
     powc.MoveLabel(inst15);
-    powc.Emit(PushArg(new(0)));
+    powc.Emit(Push((Argument)(new(0))));
     powc.Emit(Return());
 
     powc.MoveLabel(inst17);
@@ -305,20 +305,20 @@ Module MallocTest()
 
     var ptr = c.AddLocal(DataType.Pointer);
 
-    c.Emit(PushConst<nuint>(16));
+    c.Emit(Push<nuint>(16));
     c.Emit(PushRoutine(malloc.ID));
     c.Emit(CallIndirect(new(malloc.ReturnType, malloc.Parameters.ToArray(), Bridge.CallingConvention.Cdecl)));
-    c.Emit(PopLocal(ptr));
+    c.Emit(Pop(ptr));
 
-    c.Emit(PushLocal(ptr));
+    c.Emit(Push(ptr));
     c.Emit(Cast(DataType.Pointer, DataType.U64));
     c.Emit(Print(DataType.Pointer));
 
-    c.Emit(PushLocal(ptr));
+    c.Emit(Push(ptr));
     c.Emit(If(ComparisonKind.Zero, DataType.Pointer));
     c.Emit(Jump(failure));
 
-    c.Emit(PushLocal(ptr));
+    c.Emit(Push(ptr));
     c.Emit(CallDirect(free));
 
     c.Emit(PushResource(successMessage));
@@ -337,20 +337,20 @@ Module MallocTest()
     printstr.AddParameter(DataType.Pointer);
     var pscode = printstr.GetCodeBuilder();
     var start = pscode.AddLabel();
-    pscode.Emit(PushArg(new(0)));
+    pscode.Emit(Push((Argument)(new(0))));
     pscode.Emit(Load(DataType.U16));
 
     pscode.Emit(If(ComparisonKind.Zero, DataType.U16));
     pscode.Emit(Return());
 
-    pscode.Emit(PushArg(new(0)));
+    pscode.Emit(Push((Argument)(new(0))));
     pscode.Emit(Load(DataType.U16));
     pscode.Emit(PrintChar(DataType.U16));
 
-    pscode.Emit(PushArg(new(0)));
-    pscode.Emit(PushConst<nuint>(2));
+    pscode.Emit(Push((Argument)(new(0))));
+    pscode.Emit(Push<nuint>(2));
     pscode.Emit(Add(DataType.Pointer));
-    pscode.Emit(PopArg(new(0)));
+    pscode.Emit(Pop((Argument)(new(0))));
 
     pscode.Emit(Jump(start));
 

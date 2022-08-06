@@ -27,7 +27,7 @@ public class B
         test.AddParameter(DataType.I32);
 
         var maincode = main.GetCodeBuilder();
-        maincode.Emit(PushConst(TypedValue.Create(Count)));
+        maincode.Emit(Push(TypedValue.Create(Count)));
         maincode.Emit(CallDirect(test));
         maincode.Emit(Return());
 
@@ -37,22 +37,22 @@ public class B
 
         var l0 = testcode.AddLocal(DataType.I32);
 
-        testcode.Emit(PushConst(TypedValue.Create(0)));
-        testcode.Emit(PopLocal(l0));
+        testcode.Emit(Push(TypedValue.Create(0)));
+        testcode.Emit(Pop(l0));
         testcode.Emit(Jump(loopcond));
 
         testcode.MoveLabel(loopbody);
-        testcode.Emit(PushLocal(l0));
-        testcode.Emit(PushConst(TypedValue.Create(1)));
+        testcode.Emit(Push(l0));
+        testcode.Emit(Push(TypedValue.Create(1)));
         testcode.Emit(Add(DataType.I32));
-        testcode.Emit(PopLocal(l0));
+        testcode.Emit(Pop(l0));
 
-        testcode.Emit(PushLocal(l0));
+        testcode.Emit(Push(l0));
         testcode.Emit(Print(DataType.I32));
 
         testcode.MoveLabel(loopcond);
-        testcode.Emit(PushLocal(l0));
-        testcode.Emit(PushArg(new(0)));
+        testcode.Emit(Push(l0));
+        testcode.Emit(Push((Argument)(new(0))));
         testcode.Emit(If(ComparisonKind.LessThan, DataType.I32));
         testcode.Emit(Jump(loopbody));
         testcode.Emit(Return());

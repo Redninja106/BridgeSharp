@@ -142,7 +142,7 @@ public unsafe class Interpreter : IDisposable
     {
         switch (instruction)
         {
-            case Instruction<StackOpKind, byte> idInstruction:
+            case Instruction<StackOpKind, Argument> idInstruction:
                 EvalArgInstruction(idInstruction);
                 break;
             case Instruction<StackOpKind, Local> localInstruction:
@@ -292,10 +292,10 @@ public unsafe class Interpreter : IDisposable
         }
     }
 
-    private void EvalArgInstruction(Instruction<StackOpKind, byte> instruction)
+    private void EvalArgInstruction(Instruction<StackOpKind, Argument> instruction)
     {
-        DataType type = currentRoutine.Parameters[instruction.Arg2];
-        nuint location = GetArgumentLocation(instruction.Arg2);
+        DataType type = currentRoutine.Parameters[instruction.Arg2.Value];
+        nuint location = GetArgumentLocation(instruction.Arg2.Value);
 
         switch (instruction.OpCode)
         {

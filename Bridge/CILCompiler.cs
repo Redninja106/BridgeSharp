@@ -503,8 +503,8 @@ public class CILCompiler
                 var local = localInstruction.Arg2;
                 il.Emit(OpCodes.Stloc, Unsafe.As<Local, short>(ref local));
                 break;
-            case StackOpKind.Arg when instruction is Instruction<StackOpKind, byte> argInstruction:
-                il.Emit(OpCodes.Starg_S, argInstruction.Arg2);
+            case StackOpKind.Arg when instruction is Instruction<StackOpKind, Argument> argInstruction:
+                il.Emit(OpCodes.Starg_S, argInstruction.Arg2.Value);
                 break;
             case StackOpKind.ArgAddress:
             case StackOpKind.LocalAddress:
@@ -559,8 +559,8 @@ public class CILCompiler
                 local = localInstruction.Arg2;
                 il.Emit(OpCodes.Ldloca, Unsafe.As<Local, short>(ref local));
                 break;
-            case StackOpKind.Arg when instruction is Instruction<StackOpKind, byte> argInstruction:
-                il.Emit(OpCodes.Ldarg_S, argInstruction.Arg2);
+            case StackOpKind.Arg when instruction is Instruction<StackOpKind, Argument> argInstruction:
+                il.Emit(OpCodes.Ldarg_S, argInstruction.Arg2.Value);
                 break;
             case StackOpKind.ArgAddress when instruction is Instruction<StackOpKind, byte> argInstruction:
                 il.Emit(OpCodes.Ldarga_S, argInstruction.Arg2);

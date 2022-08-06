@@ -17,11 +17,11 @@ public record Instruction(OpCode OpCode)
     public static Instruction PushConst<T>(T value) where T : unmanaged => PushConst(TypedValue.Create(value));
     public static Instruction PushConst(TypedValue value) => new Instruction<StackOpKind, TypedValue>(OpCode.Push, StackOpKind.Const, value);
     public static Instruction PushLocal(Local local) => new Instruction<StackOpKind, Local>(OpCode.Push, StackOpKind.Local, local);
-    public static Instruction PushArg(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Push, StackOpKind.Arg, arg);
+    public static Instruction PushArg(Argument arg) => new Instruction<StackOpKind, Argument>(OpCode.Push, StackOpKind.Arg, arg);
     public static Instruction Pop(DataType type) => new Instruction<StackOpKind, DataType>(OpCode.Pop, StackOpKind.Const, type);
     public static Instruction PopLocal(Local local) => new Instruction<StackOpKind, Local>(OpCode.Pop, StackOpKind.Local, local);
-    public static Instruction PopArg(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Pop, StackOpKind.Arg, arg);
-    public static Instruction PushArgAddress(byte arg) => new Instruction<StackOpKind, byte>(OpCode.Push, StackOpKind.ArgAddress, arg);
+    public static Instruction PopArg(Argument arg) => new Instruction<StackOpKind, Argument>(OpCode.Pop, StackOpKind.Arg, arg);
+    public static Instruction PushArgAddress(Argument arg) => new Instruction<StackOpKind, Argument>(OpCode.Push, StackOpKind.ArgAddress, arg);
     public static Instruction PushLocalAddress(Local local) => new Instruction<StackOpKind, Local>(OpCode.Push, StackOpKind.LocalAddress, local);
     public static Instruction PushResource(Index resourceIndex) => new Instruction<StackOpKind, Index>(OpCode.Push, StackOpKind.Resource, resourceIndex);
     public static Instruction PushRoutine(int routineID) => new Instruction<StackOpKind, int>(OpCode.Push, StackOpKind.Routine, routineID);

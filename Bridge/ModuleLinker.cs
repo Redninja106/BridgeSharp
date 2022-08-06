@@ -1,4 +1,6 @@
-﻿namespace Bridge;
+﻿using System.Collections.Generic;
+
+namespace Bridge;
 
 internal class ModuleLinker
 {

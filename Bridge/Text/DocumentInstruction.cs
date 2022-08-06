@@ -26,7 +26,6 @@ internal sealed record DocumentInstruction(Token<TokenKind> Opcode, Token<TokenK
                 break;
             case OpCode.Call:
                 break;
-                break;
             case OpCode.Jump:
                 break;
             case OpCode.If:

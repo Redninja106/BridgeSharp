@@ -1,4 +1,8 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -26,6 +30,9 @@ public class CILCompiler
             throw new Exception();
 
         var type = entryPoint.DeclaringType;
+
+        if (type is null)
+            throw new Exception();
 
         foreach (var routine in module.Routines)
         {
@@ -93,7 +100,10 @@ public class CILCompiler
 
         var compiledType = typeBuilder.CreateType();
         moduleBuilder.CreateGlobalFunctions();
-        
+
+        if (compiledType is null)
+            throw new Exception();
+
         var entry = compiledType.GetMethod("__entrypoint");
         return entry;
     }
@@ -139,7 +149,7 @@ public class CILCompiler
         };
 
         var method = typeBuilder.DefinePInvokeMethod(name, library, MethodAttributes.Static | MethodAttributes.Public, CallingConventions.Standard, returnType, parameterTypes, callingConvention, CharSet.None);
-        method.SetCustomAttribute(typeof(PreserveSigAttribute).GetConstructor(Array.Empty<Type>()), new byte[0]);
+        method.SetCustomAttribute(typeof(PreserveSigAttribute).GetConstructor(Array.Empty<Type>())!, new byte[0]);
         methodBuilders.Add((externDefinition, method));
     }
 
@@ -281,7 +291,10 @@ public class CILCompiler
                     DataType.U8 or DataType.U16 or DataType.U32 => typeof(uint),
                     DataType.I64 => typeof(long),
                     DataType.U64 => typeof(ulong),
-                    DataType.Pointer => typeof(ulong)
+                    DataType.Pointer => typeof(ulong),
+                    DataType.F64 => typeof(double),
+                    DataType.F32 => typeof(float),
+                    _ => throw new Exception()
                 };
 
                 if (printInstruction.Arg1 is DataType.Pointer)
@@ -289,13 +302,13 @@ public class CILCompiler
                     il.Emit(OpCodes.Conv_U8);
                 }
 
-                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("WriteLine", new Type[] { type }), null);
+                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("WriteLine", new Type[] { type })!, null);
                 break;
             case OpCode.PrintChar when instruction is Instruction<DataType> printCharInstruction:
-                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("Write", new Type[] { typeof(char) }), null);
+                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("Write", new Type[] { typeof(char) })!, null);
                 break;
             case OpCode.ReadChar when instruction is Instruction<DataType> printCharInstruction:
-                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("Read"), null);
+                il.EmitCall(OpCodes.Call, typeof(Console).GetMethod("Read")!, null);
                 break;
             default:
                 break;
@@ -578,7 +591,7 @@ public class CILCompiler
 
         il.Emit(OpCodes.Ldc_I4, length);
         il.Emit(OpCodes.Conv_U);
-        il.EmitCall(OpCodes.Call, typeof(NativeMemory).GetMethod(nameof(NativeMemory.Alloc), new Type[] { typeof(nuint) }), null);
+        il.EmitCall(OpCodes.Call, typeof(NativeMemory).GetMethod(nameof(NativeMemory.Alloc), new Type[] { typeof(nuint) })!, null);
         il.Emit(OpCodes.Stsfld, resources);
 
         for (int i = 0; i < module.ResourceTable.EntryCount; i++)
@@ -601,7 +614,7 @@ public class CILCompiler
     private void EmitFreeResources(ILGenerator il)
     {
         il.Emit(OpCodes.Ldsfld, resources);
-        il.EmitCall(OpCodes.Call, typeof(NativeMemory).GetMethod(nameof(NativeMemory.Free)), null);
+        il.EmitCall(OpCodes.Call, typeof(NativeMemory).GetMethod(nameof(NativeMemory.Free))!, null);
         il.Emit(OpCodes.Ret);
     }
 }

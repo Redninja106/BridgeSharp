@@ -1,4 +1,7 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Bridge;
 public unsafe class Interpreter : IDisposable
@@ -602,7 +605,7 @@ public unsafe class Interpreter : IDisposable
             }
 
             var delegateType = assembly.GetType(delegateName);
-            var genericType = delegateType.MakeGenericType(genericArgs);
+            var genericType = delegateType!.MakeGenericType(genericArgs);
         }
 
         public void Dispose()

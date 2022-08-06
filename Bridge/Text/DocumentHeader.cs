@@ -10,7 +10,7 @@ internal sealed record DocumentDefinitionHeader(Token<TokenKind>? ReturnType, To
         
         foreach (var parameter in this.Parameters)
         {
-            builder.AddParameter(parameter.ToDataType().Value);
+            builder.AddParameter(parameter.ToDataType().GetValueOrDefault());
         }
     }
 }

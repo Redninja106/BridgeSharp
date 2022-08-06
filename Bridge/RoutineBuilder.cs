@@ -1,4 +1,6 @@
-﻿namespace Bridge;
+﻿using System.Linq;
+
+namespace Bridge;
 public sealed class RoutineBuilder : HeaderBuilder
 {
     private readonly RoutineCodeBuilder codeBuilder;

@@ -221,15 +221,15 @@ Module Test()
     var inst15 = powc.AddLabel();
     var inst17 = powc.AddLabel();
 
-    powc.Emit(PushArg(1));
+    powc.Emit(PushArg(new(1)));
     powc.Emit(PushConst(1));
     powc.Emit(Compare(ComparisonKind.Equal, DataType.I32));
     powc.Emit(Cast(DataType.I8, DataType.I32));
     powc.Emit(If(ComparisonKind.NotZero, DataType.I32));
     powc.Emit(Jump(inst15));
-    powc.Emit(PushArg(0));
-    powc.Emit(PushArg(0));
-    powc.Emit(PushArg(1));
+    powc.Emit(PushArg(new(0)));
+    powc.Emit(PushArg(new(0)));
+    powc.Emit(PushArg(new(1)));
     powc.Emit(PushConst(1));
     powc.Emit(Subtract(DataType.I32));
     powc.Emit(CallDirect(pow));
@@ -238,7 +238,7 @@ Module Test()
     powc.Emit(Jump(inst17));
 
     powc.MoveLabel(inst15);
-    powc.Emit(PushArg(0));
+    powc.Emit(PushArg(new(0)));
     powc.Emit(Return());
 
     powc.MoveLabel(inst17);
@@ -337,20 +337,20 @@ Module MallocTest()
     printstr.AddParameter(DataType.Pointer);
     var pscode = printstr.GetCodeBuilder();
     var start = pscode.AddLabel();
-    pscode.Emit(PushArg(0));
+    pscode.Emit(PushArg(new(0)));
     pscode.Emit(Load(DataType.U16));
 
     pscode.Emit(If(ComparisonKind.Zero, DataType.U16));
     pscode.Emit(Return());
 
-    pscode.Emit(PushArg(0));
+    pscode.Emit(PushArg(new(0)));
     pscode.Emit(Load(DataType.U16));
     pscode.Emit(PrintChar(DataType.U16));
 
-    pscode.Emit(PushArg(0));
+    pscode.Emit(PushArg(new(0)));
     pscode.Emit(PushConst<nuint>(2));
     pscode.Emit(Add(DataType.Pointer));
-    pscode.Emit(PopArg(0));
+    pscode.Emit(PopArg(new(0)));
 
     pscode.Emit(Jump(start));
 

@@ -52,7 +52,7 @@ public class B
 
         testcode.MoveLabel(loopcond);
         testcode.Emit(PushLocal(l0));
-        testcode.Emit(PushArg(0));
+        testcode.Emit(PushArg(new(0)));
         testcode.Emit(If(ComparisonKind.LessThan, DataType.I32));
         testcode.Emit(Jump(loopbody));
         testcode.Emit(Return());

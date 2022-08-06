@@ -1,26 +1,51 @@
-# BridgeSharp
- A library for compiling assembly-like instructions to different platforms
+# Bridge
+A library for compiling assembly-like instructions to a variety of platforms
 
-## Examples
-The following example creates a popup with the title `this is a title` and  
-the text `omg some content` for the content.
+## About
+The Bridge project was created to simplify the process of generating
+code using an appropriate syntax. The bridge syntax is not too complex,
+and has features such as locals and routines, while still giving the
+same control that assembly-like languages provide.
+
+## IL Example
+```
+routine main
+{
+    push.const.i32 5
+    push.const.i32 10
+    add.i32
+    print.i32
+    return
+}
+```
+
+## API Example
+
 ```csharp
-Bridge b = new Bridge(OS.win64, Arch.x86_64);
+using Bridge;
 
-b.Store("content", "omg some content");
-long content = b.GetDataAddress("content");
+// Create a module
+ModuleBuilder module = Module.CreateBuilder();
 
-b.Store("title", "this is a title");
-long title = b.GetDataAddress("title");
+// Create a main routine
+RoutineBuilder main = module.AddRoutine("main");
+main.SetReturn(DataType.Void);
 
-b.Import("MessageBoxA", "user32.dll");
-long msgbox = b.GetImportAddress("MessageBoxA");
+// Create a code section
+CodeBuilder code = main.GetCodeBuilder();
 
-b.Import("ExitProcess", "kernel32.dll");
-long extprc = b.GetImportAddress("ExitProcess");
+// Add 5 and 10
+code.Emit(Instruction.PushConst<int>(5));
+code.Emit(Instruction.PushConst<int>(10));
+code.Emit(Instruction.Add(DataType.I32));
 
-b.Call(msgbox, 0, content, title, 0);
-b.Call(extprc, 0);
+// Print 15
+code.Emit(Instruction.Print(DataType.I32));
 
-b.Compile();
+// Return
+code.Emit(Instruction.Return());
+
+// Run the module using dotnet CIL
+var result = Module.Compile(module.CreateModule());
+result.Invoke(null, null);
 ```

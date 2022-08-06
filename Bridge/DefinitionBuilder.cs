@@ -8,7 +8,6 @@ public abstract class DefinitionBuilder : IBuilder
 
     public ModuleBuilder ModuleBuilder => parent;
     public bool Closed { get; private set; }
-    
 
     public DefinitionBuilder(ModuleBuilder parent, int id, string name)
     {

@@ -1,4 +1,6 @@
-﻿namespace Bridge;
+﻿using System;
+
+namespace Bridge;
 
 public record Instruction(OpCode OpCode)
 {

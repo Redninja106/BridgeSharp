@@ -1,4 +1,7 @@
-﻿namespace Bridge;
+﻿using System;
+using System.Collections.Generic;
+
+namespace Bridge;
 public abstract class HeaderBuilder : DefinitionBuilder
 {
     public DataType ReturnType { get; set; }

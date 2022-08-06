@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace Bridge.Text;
 
@@ -261,7 +264,7 @@ internal class ModuleWriter
     private static void WriteModifier<T>(TextWriter writer, Instruction<T> instruction)
     {
         writer.Write(".");
-        writer.Write(instruction.Arg1.ToString().ToLower());
+        writer.Write(instruction.Arg1.ToString()?.ToLower());
     }
 
     private static void WriteLabel(TextWriter writer, int location, bool colon)

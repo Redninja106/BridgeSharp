@@ -1,7 +1,7 @@
-﻿namespace Bridge;
+﻿using System;
+using System.Collections.Generic;
 
-public record struct Local(ushort Value);
-public record struct Label(int Value);
+namespace Bridge;
 
 public class CodeBuilder : IBuilder
 {

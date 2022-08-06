@@ -12,5 +12,6 @@ internal enum StackOpKind : byte
     LocalAddress,
     ArgAddress,
     Resource,
+    ResourceSize,
     Routine
 }

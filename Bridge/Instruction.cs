@@ -131,6 +131,13 @@ public record Instruction(OpCode OpCode)
     public static Instruction PushResource(Index resourceIndex) => new Instruction<StackOpKind, Index>(OpCode.Push, StackOpKind.Resource, resourceIndex);
 
     /// <summary>
+    /// Pushes the size of a resource, in bytes, to the stack as native-sized int (pointer).
+    /// </summary>
+    /// <param name="resourceIndex">The index of the resource to push, typically returned from <see cref="ModuleBuilder.AddResource(string)"/>.</param>
+    /// <returns>A <c>push.resource</c> instruction.</returns>
+    public static Instruction PushResourceSize(Index resourceIndex) => new Instruction<StackOpKind, Index>(OpCode.Push, StackOpKind.ResourceSize, resourceIndex);
+
+    /// <summary>
     /// Pushes the address of a routine or extern to the stack.
     /// <para>
     /// The pushed address can then be called using <see cref="CallIndirect(CallInfo)"/>.

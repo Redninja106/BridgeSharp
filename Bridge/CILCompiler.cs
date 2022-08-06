@@ -23,6 +23,7 @@ public class CILCompiler
     private Stack<CIL.Label> ifs = new();
     private FieldInfo resources;
     private int[] resourceOffsets;
+    private int resourcesTotalSize;
 
     public static void DumpModuleIL(TextWriter writer, Module module, MethodInfo entryPoint)
     {
@@ -572,6 +573,20 @@ public class CILCompiler
                 il.Emit(OpCodes.Add);
                 il.Emit(OpCodes.Conv_U);
                 break;
+            case StackOpKind.ResourceSize when instruction is Instruction<StackOpKind, Index> resourceSizeInstruction:
+                int size;
+                if (resourceSizeInstruction.Arg2.Value >= resourceOffsets.Length - 1)
+                {
+                    size = resourcesTotalSize - resourceOffsets[resourceSizeInstruction.Arg2];
+                }
+                else
+                {
+                    size = resourceOffsets[resourceSizeInstruction.Arg2.Value + 1] - resourceOffsets[resourceSizeInstruction.Arg2];
+                }
+                
+                il.Emit(OpCodes.Ldc_I4, size);
+                il.Emit(OpCodes.Conv_U);
+                break;
             case StackOpKind.Routine when instruction is Instruction<StackOpKind, int> routineInstruction:
                 var method = this.methodBuilders[routineInstruction.Arg2].Method;
                 il.Emit(OpCodes.Ldftn, method);
@@ -587,6 +602,7 @@ public class CILCompiler
         foreach (var entry in module.ResourceTable.Entries)
         {
             length += entry.Data.Length;
+            resourcesTotalSize += length;
         }
 
         il.Emit(OpCodes.Ldc_I4, length);

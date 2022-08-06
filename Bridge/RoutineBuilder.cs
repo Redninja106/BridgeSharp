@@ -7,7 +7,6 @@ public sealed class RoutineBuilder : HeaderBuilder
 
     internal RoutineBuilder(ModuleBuilder parent, int id, string name) : base(parent, id, name)
     {
-        this.ReturnType = DataType.Void;
         this.codeBuilder = new(id);
     }
 

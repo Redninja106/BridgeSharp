@@ -45,6 +45,10 @@ public enum OpCode : byte
     Xor,
     // pops x, pushes ~x, float types not supported
     Not,
+    // pops x, y, pushes x << y, float types not supported
+    ShiftLeft,
+    // pops x, y, pushes x >> y, float types not supported
+    ShiftRight,
     // performs a comparason between top two numbers on the stack and pushes an i8 1 if true, or 0 if false
     Compare,
 

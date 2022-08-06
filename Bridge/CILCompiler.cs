@@ -282,6 +282,12 @@ public class CILCompiler
             case OpCode.Not:
                 il.Emit(OpCodes.Not);
                 break;
+            case OpCode.ShiftLeft:
+                il.Emit(OpCodes.Shl);
+                break;
+            case OpCode.ShiftRight:
+                il.Emit(OpCodes.Shr);
+                break;
             case OpCode.Compare when instruction is Instruction<ComparisonKind, DataType> compInstruction:
                 EmitCompare(il, compInstruction, false);
                 break;

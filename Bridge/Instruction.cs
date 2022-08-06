@@ -306,8 +306,21 @@ public record Instruction(OpCode OpCode)
     /// <returns>An <c>not</c> instruction.</returns>
     public static Instruction Not(DataType type) => new Instruction<DataType>(OpCode.Not, type);
 
-    // TODO: remove these functions now the externs are supported better
+    /// <summary>
+    /// Pops a value of the provided type, then pops a value of type <see cref="DataType.U8"/> and shifts the bits of the original value to the left by that amount, a finally pushes the result.
+    /// </summary>
+    /// <param name="type">The type of value to perform the bitwise shift upon.</param>
+    /// <returns>A <c>leftshift</c> instruction.</returns>
+    public static Instruction ShiftLeft(DataType type) => new Instruction<DataType>(OpCode.ShiftLeft, type);
 
+    /// <summary>
+    /// Pops a value of the provided type, then pops a value of type <see cref="DataType.U8"/> and shifts the bits of the original value to the right by that amount, a finally pushes the result.
+    /// </summary>
+    /// <param name="type">The type of value to perform the bitwise shift upon.</param>
+    /// <returns>A <c>rightshift</c> instruction.</returns>
+    public static Instruction ShiftRight(DataType type) => new Instruction<DataType>(OpCode.ShiftRight, type);
+
+    // TODO: remove these functions now that externs are supported better
     public static Instruction Print(DataType type) => new Instruction<DataType>(OpCode.Print, type);
     public static Instruction PrintChar(DataType type) => new Instruction<DataType>(OpCode.PrintChar, type);
     public static Instruction ReadChar(DataType type) => new Instruction<DataType>(OpCode.ReadChar, type);

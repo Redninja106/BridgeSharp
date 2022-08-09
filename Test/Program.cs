@@ -206,7 +206,7 @@ Module Test()
     var builder = Module.CreateBuilder();
     var main = builder.AddRoutine("main");
     var pow = builder.AddRoutine("pow");
-    pow.ReturnType = DataType.I32;
+    pow.SetReturn(DataType.I32);
     pow.AddParameter(DataType.I32);
     pow.AddParameter(DataType.I32);
 
@@ -275,20 +275,20 @@ Module MallocTest()
     var malloc = modBuilder.AddExtern("malloc");
     malloc.Library = "ucrtbase.dll";
     malloc.CallingConvention = Bridge.CallingConvention.Cdecl;
-    malloc.ReturnType = DataType.Pointer;
+    malloc.SetReturn(DataType.Pointer);
     malloc.AddParameter(DataType.Pointer);
 
 
     var free = modBuilder.AddExtern("free");
     free.Library = "ucrtbase.dll";
     free.CallingConvention = Bridge.CallingConvention.Cdecl;
-    free.ReturnType = DataType.Void;
+    free.SetReturn(DataType.Void);
     free.AddParameter(DataType.Pointer);
 
     var messagebox = modBuilder.AddExtern("MessageBoxA");
     messagebox.Library = "user32";
     messagebox.CallingConvention = Bridge.CallingConvention.StdCall;
-    messagebox.ReturnType = DataType.I32;
+    messagebox.SetReturn(DataType.I32);
     messagebox.AddParameter(DataType.Pointer);
     messagebox.AddParameter(DataType.Pointer);
     messagebox.AddParameter(DataType.Pointer);

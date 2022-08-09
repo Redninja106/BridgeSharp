@@ -16,7 +16,8 @@ using Module = Bridge.Module;
 //messages.PrintToConsole();
 
 const bool compiled = true;
-var mod = ReadCharTest();
+var mod = CallIndirectTest();
+
 
 Module.Dump(mod, Console.Out);
 
@@ -26,9 +27,8 @@ if (Module.Verify(mod, out var messages))
     if (compiled)
     {
         var entry = Module.Compile(mod, out var assembly);
-        entry.Invoke(null, null);
-        
         CILCompiler.DumpModuleIL(Console.Out, mod, entry);
+        entry.Invoke(null, null);
     }
     else
     {
@@ -39,6 +39,28 @@ if (Module.Verify(mod, out var messages))
 else
 {
     messages.PrintToConsole();
+}
+
+Module CallIndirectTest()
+{
+    var builder = Module.CreateBuilder();
+
+    var main = builder.AddRoutine("main");
+    var hey = builder.AddRoutine("hey");
+    hey.AddParameter(DataType.I32);
+
+    var mc = main.GetCodeBuilder();
+    mc.Emit(Push(14));
+    mc.Emit(PushRoutine(hey));
+    mc.Emit(CallIndirect(new CallInfo(DataType.Void, new DataType[] { DataType.I32 }, Bridge.CallingConvention.Bridge)));
+    mc.Emit(Return());
+
+    var hc = hey.GetCodeBuilder();
+    hc.Emit(Push(new Argument(0)));
+    hc.Emit(Print(DataType.I32));
+    hc.Emit(Return());
+
+    return builder.CreateModule();
 }
 
 Module ReadCharTest()

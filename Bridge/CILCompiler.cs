@@ -348,7 +348,7 @@ public class CILCompiler
                     il.Emit(OpCodes.Tailcall);
 
                 var indirectCallInstruction = (Instruction<CallMode, CallInfo>)instruction;
-                var ret = TypedValue.GetDataTypePrimitive(indirectCallInstruction.Arg2.ReturnType);
+                var ret = TypedValue.GetDataTypePrimitive(indirectCallInstruction.Arg2.ReturnType) ?? typeof(void);
                 var parameters = indirectCallInstruction.Arg2.Parameters.Select(TypedValue.GetDataTypePrimitive).ToArray();
 
                 if (indirectCallInstruction.Arg2.CallingConvention is CallingConvention.Bridge)

@@ -6,7 +6,7 @@ internal sealed record DocumentDefinitionHeader(Token<TokenKind>? ReturnType, To
 {
     public void Build(DocumentBuildContext context, HeaderBuilder builder)
     {
-        builder.ReturnType = this.ReturnType?.ToDataType() ?? DataType.Void;
+        builder.SetReturn(this.ReturnType?.ToDataType() ?? DataType.Void);
         
         foreach (var parameter in this.Parameters)
         {

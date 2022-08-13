@@ -407,22 +407,19 @@ public class CILCompiler
                 break;
             case ComparisonKind.NotEqual:
                 il.Emit(OpCodes.Ceq);
-                il.Emit(OpCodes.Not);
-                break;
+                goto case ComparisonKind.Zero;
             case ComparisonKind.GreaterThan:
                 il.Emit(unsigned ? OpCodes.Cgt_Un : OpCodes.Cgt);
                 break;
             case ComparisonKind.LessThanEqual:
                 il.Emit(unsigned ? OpCodes.Cgt_Un : OpCodes.Cgt);
-                il.Emit(OpCodes.Not);
-                break;
+                goto case ComparisonKind.Zero;
             case ComparisonKind.LessThan:
                 il.Emit(unsigned ? OpCodes.Clt_Un : OpCodes.Clt);
                 break;
             case ComparisonKind.GreaterThanEqual:
                 il.Emit(unsigned ? OpCodes.Clt_Un : OpCodes.Clt);
-                il.Emit(OpCodes.Not);
-                break;
+                goto case ComparisonKind.Zero;
             case ComparisonKind.Zero:
                 il.Emit(OpCodes.Ldc_I4_0);
                 goto case ComparisonKind.Equal;

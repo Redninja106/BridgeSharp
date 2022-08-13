@@ -5,6 +5,17 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>warnings</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Authors>The Bridge Project</Authors>
+    <Description>A library for compiling assembly-like instructions to a variety of platforms.</Description>
+    <PackageProjectUrl></PackageProjectUrl>
+    <RepositoryUrl>https://github.com/thebridgeproject/BridgeSharp</RepositoryUrl>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
+    <AssemblyVersion></AssemblyVersion>
+    <FileVersion></FileVersion>
+    <Version>0.0.1</Version>
+    <PackageId>BridgeSharp</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

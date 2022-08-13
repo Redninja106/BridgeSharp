@@ -377,7 +377,11 @@ public class CILCompiler
     {
         var falseCase = il.DefineLabel();
 
-        EmitCompare(il, ifInstruction, true);
+        if (ifInstruction.Arg1 is not ComparisonKind.NotZero)
+        {
+            EmitCompare(il, ifInstruction, true);
+        }
+        
         il.Emit(OpCodes.Brfalse, falseCase);
 
         return falseCase;

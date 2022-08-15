@@ -41,6 +41,26 @@ public readonly record struct TypedValue(ulong Bits, DataType Type)
         return GetDataType<T>() == this.Type;
     }
 
+    public static TypedValue Parse(string value, DataType dataType)
+    {
+        return dataType switch
+        {
+            DataType.I64     => Create(long.Parse(value)),
+            DataType.I32     => Create(int.Parse(value)),
+            DataType.I16     => Create(short.Parse(value)),
+            DataType.I8      => Create(sbyte.Parse(value)),
+            DataType.U64     => Create(ulong.Parse(value)),
+            DataType.U32     => Create(uint.Parse(value)),
+            DataType.U16     => Create(ushort.Parse(value)),
+            DataType.U8      => Create(byte.Parse(value)),
+            DataType.F64     => Create(double.Parse(value)),
+            DataType.F32     => Create(float.Parse(value)),
+            DataType.Pointer => Create(nuint.Parse(value)),
+            DataType.Void    => Create(ulong.Parse(value)),
+            _ => throw new ArgumentException("Invalid DataType!", nameof(dataType)),
+        };
+    }
+
     /// <summary>
     /// Creates a new <see cref="TypedValue"/> from the provided primitive.
     /// <para>

@@ -223,6 +223,9 @@ public class CILCompiler
             case OpCode.Return:
                 il.Emit(OpCodes.Ret);
                 break;
+            case OpCode.Duplicate:
+                il.Emit(OpCodes.Dup);
+                break;
             case OpCode.Jump:
                 if (instruction is not Instruction<Label> labelInst)
                     throw new Exception();

@@ -16,7 +16,7 @@ using Module = Bridge.Module;
 //messages.PrintToConsole();
 
 const bool compiled = true;
-var mod = CallIndirectTest();
+var mod = DupTest();
 
 
 Module.Dump(mod, Console.Out);
@@ -40,6 +40,24 @@ else
 {
     messages.PrintToConsole();
 }
+
+
+Module DupTest()
+{
+    var builder = Module.CreateBuilder();
+
+    var main = builder.AddRoutine("main");
+    var c = main.GetCodeBuilder();
+
+    c.Emit(Push(69));
+    c.Emit(Duplicate(DataType.I32));
+    c.Emit(Print(DataType.I32));
+    c.Emit(Print(DataType.I32));
+    c.Emit(Return());
+
+    return builder.CreateModule();
+}
+
 
 Module CallIndirectTest()
 {

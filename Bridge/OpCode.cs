@@ -21,6 +21,8 @@ public enum OpCode : byte
     If,
     // pops one value to the stack, converts it to another type, and pushes it back on
     Cast,
+    // pops a value and pushes it twice
+    Duplicate,
     // add two numbers on top of the stack
     Add,
     // subtract two numbers on top of the stack

@@ -221,6 +221,13 @@ public record Instruction(OpCode OpCode)
     public static Instruction Compare(ComparisonKind kind, DataType type) => new Instruction<ComparisonKind, DataType>(OpCode.Compare, kind, type);
 
     /// <summary>
+    /// Pops a value of the provided type, and pushes it to the stack twice.
+    /// </summary>
+    /// <param name="type">The type of value to duplicate.</param>
+    /// <returns>A <c>duplicate</c> instruction.</returns>
+    public static Instruction Duplicate(DataType type) => new Instruction<DataType>(OpCode.Duplicate, type);
+
+    /// <summary>
     /// Pops two values and adds them, then pushes the result.
     /// </summary>
     /// <param name="type">The type of value to perform the addition on.</param>

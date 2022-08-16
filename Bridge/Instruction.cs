@@ -198,7 +198,7 @@ public record Instruction(OpCode OpCode)
     public static Instruction Load(DataType type) => new Instruction<DataType>(OpCode.Load, type);
 
     /// <summary>
-    /// Pops an address from the stack, then a value of the provided type, then writes that value to the address.
+    /// Pops a value of the provided type from the stack, then an address, then writes that value to the address.
     /// </summary>
     /// <param name="type">The type of value to write.</param>
     /// <returns>A <c>store</c> instruction.</returns>
